@@ -73,7 +73,7 @@ export function PeoplePage({
           <CardTitle>Personas</CardTitle>
           <p className="text-sm text-muted-foreground">
             Tu lista del hogar. No son cuentas: son las personas entre las que se
-            reparten las compras.
+            reparten los gastos.
           </p>
         </CardHeader>
         <CardContent>

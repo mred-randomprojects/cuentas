@@ -62,7 +62,7 @@ export function DashboardPage({
           </Card>
           <Card>
             <CardContent className="flex flex-col gap-1 p-5">
-              <span className="text-sm text-muted-foreground">Compras</span>
+              <span className="text-sm text-muted-foreground">Gastos</span>
               <strong className="font-serif text-2xl font-bold text-[hsl(var(--negative))]">
                 {formatARS(ledger.totalPurchases)}
               </strong>
@@ -150,7 +150,7 @@ export function DashboardPage({
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{row.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {row.purchases.length} compras asignadas
+                        {row.purchases.length} gastos asignados
                       </p>
                     </div>
                     <span className="shrink-0 font-bold text-[hsl(var(--negative))]">
@@ -170,7 +170,7 @@ export function DashboardPage({
           <div className="space-y-1">
             <CardTitle>Movimientos</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Historial de entradas y compras.
+              Historial de entradas y gastos.
             </p>
           </div>
           <Button onClick={onNewMovement} size="sm">

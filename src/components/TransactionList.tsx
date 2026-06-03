@@ -12,7 +12,7 @@ type Filter = "todos" | MovementType;
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "todos", label: "Todos" },
   { value: "entrada", label: "Entradas" },
-  { value: "compra", label: "Compras" },
+  { value: "compra", label: "Gastos" },
 ];
 
 interface TransactionListProps {
@@ -89,7 +89,7 @@ export function TransactionList({
           description={
             transactions.length
               ? "Probá con otro filtro o búsqueda."
-              : "Registrá una entrada o una compra."
+              : "Registrá una entrada o un gasto."
           }
         />
       ) : (

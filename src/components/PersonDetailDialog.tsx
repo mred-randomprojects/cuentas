@@ -159,9 +159,9 @@ export function PersonDetailDialog({
           </Section>
 
           <Section
-            title="Compras"
+            title="Gastos"
             count={compras.length}
-            empty="No participó de ninguna compra."
+            empty="No participó de ningún gasto."
           >
             {compras.map(({ tx, share, participantCount }) => (
               <MovementRow

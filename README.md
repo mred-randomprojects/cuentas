@@ -1,7 +1,7 @@
 # cuentas
 
 Small web app to track a shared household "pot" (pozo): money people put in
-(_entradas_) and purchases split between them (_compras_), with live balances
+(_entradas_) and expenses/services split between them (_gastos_), with live balances
 and a shareable report.
 
 - **Stack:** Vite + React + TypeScript + Tailwind, Firebase (Google auth +
@@ -25,10 +25,10 @@ npm run dev
 
 ## Features
 
-- **Resumen** — pool total, entradas/compras totals, per-person balances, and
+- **Resumen** — pool total, entradas/gastos totals, per-person balances, and
   who still owes. Click a person to open their detail.
 - **Personas** — manage the household list; click a person to see their
-  entradas, the compras they took part in, and their balance.
+  entradas, the gastos they took part in, and their balance.
 - **Reporte** — a WhatsApp-ready text report, filterable by all time, a single
   month, or a custom date range; copy or download as `.txt`.
 - Add/edit movements happen in a dialog (not inline at the top of the page).

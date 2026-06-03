@@ -33,7 +33,7 @@ export function LoginPage() {
           <div>
             <h1 className="font-serif text-4xl font-bold tracking-tight">cuentas</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Compras, entradas y saldos del pozo compartido.
+              Gastos, entradas y saldos del pozo compartido.
             </p>
           </div>
         </div>

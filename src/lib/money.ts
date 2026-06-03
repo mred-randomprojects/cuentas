@@ -45,9 +45,13 @@ export function formatInputAmount(amount: number): string {
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "Sin fecha";
   const date = new Date(`${value}T00:00:00`);
-  return new Intl.DateTimeFormat("es-AR", {
+  const formatted = new Intl.DateTimeFormat("es-AR", {
+    weekday: "long",
     day: "2-digit",
-    month: "short",
+    month: "long",
     year: "numeric",
   }).format(date);
+  // e.g. "miércoles, 03 de junio de 2026" -> "Miércoles 03 de junio de 2026"
+  const cleaned = formatted.replace(",", "");
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }

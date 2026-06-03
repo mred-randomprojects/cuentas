@@ -20,7 +20,7 @@ export function buildReportText(
   lines.push("");
   lines.push(`Pozo disponible: ${formatARS(ledger.pool)}`);
   lines.push(`Total de entradas: ${formatARS(ledger.totalEntries)}`);
-  lines.push(`Total de compras: ${formatARS(ledger.totalPurchases)}`);
+  lines.push(`Total de gastos: ${formatARS(ledger.totalPurchases)}`);
   lines.push("");
   lines.push("SALDOS");
 
@@ -32,7 +32,7 @@ export function buildReportText(
       lines.push(
         `${row.name}: ${status.label} ${formatARS(Math.abs(row.balance))} | puso ${formatARS(
           row.entries,
-        )} | compras ${formatARS(row.expenses)}`,
+        )} | gastos ${formatARS(row.expenses)}`,
       );
     }
   }
@@ -48,12 +48,12 @@ export function buildReportText(
       lines.push("");
       lines.push(`${row.name}`);
       lines.push(`Puso: ${formatARS(row.entries)}`);
-      lines.push(`Compras asignadas: ${formatARS(row.expenses)}`);
+      lines.push(`Gastos asignados: ${formatARS(row.expenses)}`);
       lines.push(`Saldo: ${status.label} ${formatARS(Math.abs(row.balance))}`);
       if (!row.purchases.length) {
-        lines.push("Compras: ninguna");
+        lines.push("Gastos: ninguno");
       } else {
-        lines.push("Compras:");
+        lines.push("Gastos:");
         const purchases = [...row.purchases].sort((a, b) =>
           a.tx.date.localeCompare(b.tx.date),
         );
@@ -85,7 +85,7 @@ export function buildReportText(
         );
       } else {
         lines.push(
-          `- ${formatDate(tx.date)} · Compra · ${tx.description} · ${formatARS(
+          `- ${formatDate(tx.date)} · Gasto · ${tx.description} · ${formatARS(
             tx.amount,
           )} · ${describeParticipants(people, tx.participantIds)}`,
         );

@@ -1,0 +1,20 @@
+{
+  "name": "cuentas",
+  "short_name": "cuentas",
+  "description": "Pozo compartido del hogar: entradas, gastos y saldos.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f3ea",
+  "theme_color": "#f7f3ea",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

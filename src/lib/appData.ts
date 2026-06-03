@@ -8,7 +8,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function defaultDescription(type: MovementType): string {
-  return type === "entrada" ? "Entrada de dinero" : "Compra";
+  return type === "entrada" ? "Entrada de dinero" : "Gasto";
 }
 
 export function emptyAppData(): AppData {

@@ -37,7 +37,7 @@ export function TransactionCard({
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={isPurchase ? "negative" : "positive"}>
-            {isPurchase ? "Compra" : "Entrada"}
+            {isPurchase ? "Gasto" : "Entrada"}
           </Badge>
           <strong className="break-words text-sm font-semibold">
             {tx.description}

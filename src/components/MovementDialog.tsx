@@ -120,13 +120,13 @@ export function MovementDialog({
         people.some((person) => person.id === id),
       );
       if (!participantIds.length) {
-        show("Elegí al menos una persona para repartir la compra.");
+        show("Elegí al menos una persona para repartir el gasto.");
         return;
       }
       onSubmit({
         id: editing?.id,
         type,
-        description: description.trim() || "Compra",
+        description: description.trim() || "Gasto",
         amount: parsedAmount,
         date: date || todayISO(),
         personId: "",
@@ -141,7 +141,7 @@ export function MovementDialog({
     ? "Guardar cambios"
     : type === "entrada"
       ? "Registrar entrada"
-      : "Registrar compra";
+      : "Registrar gasto";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,7 +151,7 @@ export function MovementDialog({
             {editing ? "Editar movimiento" : "Nuevo movimiento"}
           </DialogTitle>
           <DialogDescription>
-            Registrá una entrada al pozo o una compra repartida.
+            Registrá una entrada al pozo o un gasto repartido.
           </DialogDescription>
         </DialogHeader>
 
@@ -169,7 +169,7 @@ export function MovementDialog({
               tone="negative"
               onClick={() => setType("compra")}
             >
-              Compra
+              Gasto
             </SegmentButton>
           </div>
 
