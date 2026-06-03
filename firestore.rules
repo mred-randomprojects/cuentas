@@ -1,0 +1,29 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Keep this list in sync with VITE_ALLOWED_EMAILS.
+    // Only these Google accounts may use the app.
+    function allowedEmails() {
+      return [
+        "maxiredigonda@gmail.com"
+      ];
+    }
+
+    function isAllowedUser() {
+      return request.auth != null
+        && request.auth.token.email in allowedEmails();
+    }
+
+    // Each signed-in, allowlisted user can read and write only their own data.
+    match /users/{userId}/{document=**} {
+      allow read, write: if isAllowedUser() && request.auth.uid == userId;
+    }
+
+    // Everything else is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

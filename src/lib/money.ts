@@ -1,0 +1,53 @@
+export function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Parses loosely-typed money input the way the original cuentas app did:
+ * accepts "200k", "1,5m", "20.000", "150000", "1.234,56", "$ 1.000", "ARS 200".
+ * Returns NaN when the input cannot be understood.
+ */
+export function parseMoney(value: string | number | null | undefined): number {
+  let raw = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (!raw) return NaN;
+  raw = raw.replace(/\s+/g, "").replace(/\$/g, "").replace(/ars/g, "");
+  const multiplier = raw.endsWith("k") ? 1000 : raw.endsWith("m") ? 1_000_000 : 1;
+  if (multiplier !== 1) raw = raw.slice(0, -1);
+
+  if (raw.includes(",") && raw.includes(".")) {
+    raw = raw.replace(/\./g, "").replace(",", ".");
+  } else if (raw.includes(",")) {
+    raw = raw.replace(",", ".");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+    raw = raw.replace(/\./g, "");
+  }
+
+  const amount = Number(raw);
+  return Number.isFinite(amount) ? Math.round(amount * multiplier * 100) / 100 : NaN;
+}
+
+export function formatARS(value: number): string {
+  const amount = Math.abs(value) < 0.005 ? 0 : value;
+  const hasCents = Math.round(amount * 100) % 100 !== 0;
+  return `ARS ${new Intl.NumberFormat("es-AR", {
+    minimumFractionDigits: hasCents ? 2 : 0,
+    maximumFractionDigits: hasCents ? 2 : 0,
+  }).format(amount)}`;
+}
+
+/** Plain number formatting used to pre-fill the amount field when editing. */
+export function formatInputAmount(amount: number): string {
+  return new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 }).format(amount);
+}
+
+export function formatDate(value: string | null | undefined): string {
+  if (!value) return "Sin fecha";
+  const date = new Date(`${value}T00:00:00`);
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}

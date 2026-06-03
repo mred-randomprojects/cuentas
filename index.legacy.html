@@ -1,0 +1,1828 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>cuentas</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f5f1e6;
+        --paper-strong: #fffdf6;
+        --ink: #151714;
+        --muted: #6a665c;
+        --line: #d8d0be;
+        --line-strong: #b8ad96;
+        --teal: #146c63;
+        --teal-soft: #d7e9e4;
+        --carmine: #a43d2c;
+        --carmine-soft: #f1ddd8;
+        --ochre: #bd8624;
+        --ochre-soft: #f5e8c8;
+        --shadow: 0 20px 60px rgba(35, 28, 18, 0.12);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+      }
+
+      body {
+        min-height: 100%;
+        margin: 0;
+        color: var(--ink);
+        font-family: "Avenir Next", "Gill Sans", "Segoe UI", sans-serif;
+        background:
+          linear-gradient(90deg, rgba(21, 23, 20, 0.045) 1px, transparent 1px) 0 0 / 38px 38px,
+          linear-gradient(rgba(21, 23, 20, 0.04) 1px, transparent 1px) 0 0 / 38px 38px,
+          radial-gradient(circle at 18px 18px, rgba(164, 61, 44, 0.08) 1px, transparent 1px) 0 0 / 76px 76px,
+          var(--paper);
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0 auto 0 54px;
+        z-index: -1;
+        width: 2px;
+        content: "";
+        background: linear-gradient(var(--carmine), transparent 72%);
+        opacity: 0.35;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        min-height: 40px;
+        border: 0;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        color: var(--ink);
+        background: rgba(255, 253, 246, 0.94);
+        outline: none;
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease,
+          background 160ms ease;
+      }
+
+      input,
+      select {
+        min-height: 44px;
+        padding: 0 12px;
+      }
+
+      textarea {
+        min-height: 240px;
+        resize: vertical;
+        padding: 12px;
+        line-height: 1.5;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--teal);
+        background: var(--paper-strong);
+        box-shadow: 0 0 0 3px rgba(20, 108, 99, 0.16);
+      }
+
+      label {
+        display: grid;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .app {
+        width: min(1440px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 42px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: end;
+        margin-bottom: 22px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid rgba(184, 173, 150, 0.75);
+      }
+
+      .brand {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 54px;
+        height: 54px;
+        place-items: center;
+        border: 1px solid rgba(21, 23, 20, 0.16);
+        border-radius: var(--radius);
+        color: var(--paper-strong);
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent),
+          var(--ink);
+        box-shadow: inset 0 -6px 0 rgba(189, 134, 36, 0.35);
+        font-family: "Iowan Old Style", "Charter", Georgia, serif;
+        font-size: 1.7rem;
+        line-height: 1;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Iowan Old Style", "Charter", Georgia, serif;
+        font-weight: 700;
+      }
+
+      h1 {
+        font-size: 2.65rem;
+        line-height: 0.94;
+      }
+
+      .tagline {
+        margin-top: 7px;
+        color: var(--muted);
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 44px;
+        padding: 0 14px;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        color: var(--paper-strong);
+        background: var(--ink);
+        box-shadow: 0 8px 20px rgba(21, 23, 20, 0.16);
+        transition:
+          transform 140ms ease,
+          box-shadow 140ms ease,
+          background 140ms ease,
+          border-color 140ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 26px rgba(21, 23, 20, 0.18);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn.secondary {
+        color: var(--ink);
+        background: rgba(255, 253, 246, 0.86);
+        border-color: var(--line);
+        box-shadow: none;
+      }
+
+      .btn.ghost {
+        color: var(--teal);
+        background: transparent;
+        border-color: rgba(20, 108, 99, 0.2);
+        box-shadow: none;
+      }
+
+      .btn.danger {
+        color: var(--carmine);
+        background: rgba(164, 61, 44, 0.09);
+        border-color: rgba(164, 61, 44, 0.22);
+        box-shadow: none;
+      }
+
+      .btn.wide {
+        width: 100%;
+      }
+
+      .app-grid {
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+        gap: 22px;
+        align-items: start;
+      }
+
+      .rail,
+      .main {
+        display: grid;
+        gap: 18px;
+      }
+
+      .surface {
+        border: 1px solid rgba(184, 173, 150, 0.74);
+        border-radius: var(--radius);
+        background: rgba(255, 253, 246, 0.82);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .section {
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .section-header {
+        display: flex;
+        gap: 14px;
+        align-items: start;
+        justify-content: space-between;
+      }
+
+      .section-title {
+        display: grid;
+        gap: 3px;
+      }
+
+      .section-title h2 {
+        font-size: 1.22rem;
+      }
+
+      .section-title p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.4;
+      }
+
+      .mini-label {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .people-form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+      }
+
+      .people-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .person-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px;
+        align-items: center;
+        min-height: 46px;
+        padding: 7px;
+        border: 1px solid rgba(216, 208, 190, 0.78);
+        border-radius: var(--radius);
+        background: rgba(245, 241, 230, 0.72);
+      }
+
+      .person-dot {
+        width: 14px;
+        height: 14px;
+        border: 1px solid rgba(21, 23, 20, 0.18);
+        border-radius: 99px;
+        background: var(--teal);
+      }
+
+      .person-row input {
+        min-height: 34px;
+        padding: 0 8px;
+        border-color: transparent;
+        background: transparent;
+        font-weight: 700;
+      }
+
+      .person-row input:focus {
+        border-color: var(--teal);
+        background: var(--paper-strong);
+      }
+
+      .metric-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .metric {
+        display: grid;
+        gap: 5px;
+        padding: 14px;
+        border: 1px solid rgba(216, 208, 190, 0.85);
+        border-radius: var(--radius);
+        background:
+          linear-gradient(90deg, rgba(20, 108, 99, 0.08), transparent),
+          rgba(255, 253, 246, 0.78);
+      }
+
+      .metric strong {
+        font-family: "Iowan Old Style", "Charter", Georgia, serif;
+        font-size: 1.55rem;
+        line-height: 1.05;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .split-metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .micro-metric {
+        display: grid;
+        gap: 4px;
+        min-height: 74px;
+        padding: 12px;
+        border: 1px solid rgba(216, 208, 190, 0.85);
+        border-radius: var(--radius);
+        background: rgba(255, 253, 246, 0.72);
+      }
+
+      .micro-metric strong {
+        font-size: 1rem;
+      }
+
+      .micro-metric span {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .movement-form {
+        display: grid;
+        gap: 16px;
+      }
+
+      .segment {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 5px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(245, 241, 230, 0.82);
+      }
+
+      .segment button {
+        border-radius: 6px;
+        color: var(--muted);
+        background: transparent;
+        font-weight: 700;
+      }
+
+      .segment button.active {
+        color: var(--paper-strong);
+        background: var(--teal);
+        box-shadow: 0 8px 22px rgba(20, 108, 99, 0.18);
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .form-grid .full {
+        grid-column: 1 / -1;
+      }
+
+      .participant-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .participant-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+        gap: 8px;
+      }
+
+      .person-toggle {
+        display: block;
+        min-width: 0;
+        color: var(--ink);
+        font-size: 0.92rem;
+      }
+
+      .person-toggle input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+      }
+
+      .person-toggle span {
+        display: flex;
+        min-height: 42px;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 253, 246, 0.78);
+      }
+
+      .person-toggle span::before {
+        width: 12px;
+        height: 12px;
+        flex: 0 0 auto;
+        border: 1px solid var(--line-strong);
+        border-radius: 3px;
+        content: "";
+        background: var(--paper-strong);
+      }
+
+      .person-toggle input:checked + span {
+        border-color: rgba(20, 108, 99, 0.48);
+        background: var(--teal-soft);
+        color: #0d514a;
+        font-weight: 700;
+      }
+
+      .person-toggle input:checked + span::before {
+        border-color: var(--teal);
+        background:
+          linear-gradient(135deg, transparent 45%, var(--paper-strong) 45%, var(--paper-strong) 55%, transparent 55%),
+          var(--teal);
+      }
+
+      .form-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .edit-note {
+        display: none;
+        min-height: 36px;
+        align-items: center;
+        padding: 7px 10px;
+        border: 1px solid rgba(189, 134, 36, 0.28);
+        border-radius: var(--radius);
+        color: #7b5617;
+        background: var(--ochre-soft);
+        font-size: 0.88rem;
+      }
+
+      .edit-note.visible {
+        display: flex;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .balance-list,
+      .debt-list,
+      .transaction-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .balance-row,
+      .debt-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        min-height: 64px;
+        padding: 12px;
+        border: 1px solid rgba(216, 208, 190, 0.86);
+        border-radius: var(--radius);
+        background: rgba(255, 253, 246, 0.68);
+      }
+
+      .balance-row small,
+      .debt-row small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+      }
+
+      .amount {
+        white-space: nowrap;
+        font-weight: 800;
+      }
+
+      .amount.positive {
+        color: var(--teal);
+      }
+
+      .amount.negative {
+        color: var(--carmine);
+      }
+
+      .amount.neutral {
+        color: var(--muted);
+      }
+
+      .status-pill {
+        display: inline-flex;
+        min-height: 28px;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 99px;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .status-pill.positive {
+        color: #0d514a;
+        background: var(--teal-soft);
+      }
+
+      .status-pill.negative {
+        color: #7d2d20;
+        background: var(--carmine-soft);
+      }
+
+      .status-pill.neutral {
+        color: var(--muted);
+        background: rgba(216, 208, 190, 0.45);
+      }
+
+      .transaction-toolbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .filter-group {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+
+      .filter-group button {
+        min-height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        color: var(--muted);
+        background: rgba(255, 253, 246, 0.78);
+      }
+
+      .filter-group button.active {
+        color: var(--paper-strong);
+        border-color: var(--ink);
+        background: var(--ink);
+      }
+
+      .transaction-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid rgba(216, 208, 190, 0.9);
+        border-left: 5px solid var(--teal);
+        border-radius: var(--radius);
+        background: rgba(255, 253, 246, 0.76);
+      }
+
+      .transaction-card.purchase {
+        border-left-color: var(--carmine);
+      }
+
+      .transaction-main {
+        min-width: 0;
+      }
+
+      .transaction-title {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+
+      .transaction-title strong {
+        word-break: break-word;
+        font-size: 1rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        min-height: 25px;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 99px;
+        color: #0d514a;
+        background: var(--teal-soft);
+        font-size: 0.76rem;
+        font-weight: 800;
+      }
+
+      .badge.purchase {
+        color: #7d2d20;
+        background: var(--carmine-soft);
+      }
+
+      .transaction-meta {
+        display: grid;
+        gap: 3px;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .transaction-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        min-width: 38px;
+        min-height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        color: var(--ink);
+        background: rgba(245, 241, 230, 0.82);
+      }
+
+      .icon-btn:hover {
+        border-color: var(--line-strong);
+        background: var(--paper-strong);
+      }
+
+      .empty {
+        display: grid;
+        gap: 12px;
+        min-height: 120px;
+        place-items: center;
+        padding: 22px;
+        border: 1px dashed var(--line-strong);
+        border-radius: var(--radius);
+        color: var(--muted);
+        text-align: center;
+        background: rgba(245, 241, 230, 0.54);
+      }
+
+      .empty strong {
+        color: var(--ink);
+      }
+
+      .report-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .report-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .fine-print {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.45;
+      }
+
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 10;
+        max-width: min(420px, calc(100vw - 36px));
+        padding: 12px 14px;
+        border: 1px solid rgba(21, 23, 20, 0.16);
+        border-radius: var(--radius);
+        color: var(--paper-strong);
+        background: var(--ink);
+        box-shadow: 0 16px 40px rgba(21, 23, 20, 0.26);
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition:
+          opacity 160ms ease,
+          transform 160ms ease;
+      }
+
+      .toast.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 1080px) {
+        .app-grid,
+        .summary-grid,
+        .report-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .rail {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: start;
+        }
+      }
+
+      @media (max-width: 760px) {
+        body::before {
+          left: 16px;
+        }
+
+        .app {
+          width: min(100% - 20px, 680px);
+          padding-top: 14px;
+        }
+
+        .topbar {
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+
+        h1 {
+          font-size: 2.15rem;
+        }
+
+        .toolbar {
+          justify-content: flex-start;
+        }
+
+        .rail,
+        .form-grid,
+        .split-metrics,
+        .transaction-toolbar {
+          grid-template-columns: 1fr;
+        }
+
+        .section {
+          padding: 14px;
+        }
+
+        .transaction-card {
+          grid-template-columns: 1fr;
+        }
+
+        .transaction-actions {
+          justify-content: flex-start;
+        }
+
+        .filter-group {
+          justify-content: flex-start;
+          overflow-x: auto;
+          padding-bottom: 2px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.001ms !important;
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">c</div>
+          <div>
+            <h1>cuentas</h1>
+            <p class="tagline">Compras, entradas y saldos del pozo compartido.</p>
+          </div>
+        </div>
+        <div class="toolbar" aria-label="Acciones de datos">
+          <button class="btn secondary" id="demoBtn" type="button">Cargar ejemplo</button>
+          <button class="btn secondary" id="exportDataBtn" type="button">Exportar datos</button>
+          <button class="btn secondary" id="importDataBtn" type="button">Importar</button>
+          <button class="btn danger" id="resetBtn" type="button">Limpiar todo</button>
+          <input class="hidden" id="importFile" type="file" accept="application/json,.json" />
+        </div>
+      </header>
+
+      <div class="app-grid">
+        <aside class="rail" aria-label="Panel lateral">
+          <section class="surface section" aria-labelledby="personas-title">
+            <div class="section-header">
+              <div class="section-title">
+                <h2 id="personas-title">Personas</h2>
+                <p id="peopleCount">0 anotadas</p>
+              </div>
+            </div>
+
+            <form class="people-form" id="personForm">
+              <label>
+                Nombre
+                <input id="personName" autocomplete="off" placeholder="Elena, Marisol..." />
+              </label>
+              <button class="btn" type="submit" aria-label="Agregar persona">+</button>
+            </form>
+
+            <div class="people-list" id="peopleList"></div>
+          </section>
+
+          <section class="surface section" aria-labelledby="pozo-title">
+            <div class="section-title">
+              <h2 id="pozo-title">Pozo</h2>
+              <p>Estado actual calculado desde el historial.</p>
+            </div>
+            <div class="metric-stack">
+              <div class="metric">
+                <span>Disponible</span>
+                <strong id="poolAmount">ARS 0</strong>
+              </div>
+              <div class="split-metrics">
+                <div class="micro-metric">
+                  <span>Entradas</span>
+                  <strong id="totalEntries">ARS 0</strong>
+                </div>
+                <div class="micro-metric">
+                  <span>Compras</span>
+                  <strong id="totalPurchases">ARS 0</strong>
+                </div>
+              </div>
+            </div>
+            <p class="fine-print" id="saveStatus">Guardado local.</p>
+          </section>
+        </aside>
+
+        <div class="main">
+          <section class="surface section" aria-labelledby="movimiento-title">
+            <div class="section-header">
+              <div class="section-title">
+                <h2 id="movimiento-title">Nuevo movimiento</h2>
+                <p>Registrá una entrada al pozo o una compra repartida.</p>
+              </div>
+              <div class="edit-note" id="editNote">Editando movimiento</div>
+            </div>
+
+            <form class="movement-form" id="movementForm">
+              <div class="segment" role="tablist" aria-label="Tipo de movimiento">
+                <button class="active" id="entryTypeBtn" type="button" data-type="entrada">Entrada</button>
+                <button id="purchaseTypeBtn" type="button" data-type="compra">Compra</button>
+              </div>
+
+              <div class="form-grid">
+                <label>
+                  Fecha
+                  <input id="movementDate" type="date" required />
+                </label>
+                <label>
+                  Monto
+                  <input id="movementAmount" inputmode="decimal" autocomplete="off" placeholder="200k, 20.000, 150000" required />
+                </label>
+                <label class="full">
+                  Descripción
+                  <input id="movementDescription" autocomplete="off" placeholder="Verduras, cena día 22, entrada Marisol..." />
+                </label>
+                <label id="entryPersonWrap">
+                  Persona que agrega dinero
+                  <select id="entryPerson"></select>
+                </label>
+              </div>
+
+              <div id="participantsWrap" class="hidden">
+                <div class="section-header">
+                  <div class="section-title">
+                    <h3>Participantes</h3>
+                    <p>La compra se reparte en partes iguales entre las personas seleccionadas.</p>
+                  </div>
+                  <div class="participant-tools">
+                    <button class="btn ghost" id="selectAllBtn" type="button">Todos</button>
+                    <button class="btn ghost" id="selectNoneBtn" type="button">Nadie</button>
+                  </div>
+                </div>
+                <div class="participant-grid" id="participantGrid"></div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn" id="submitMovementBtn" type="submit">Registrar entrada</button>
+                <button class="btn secondary hidden" id="cancelEditBtn" type="button">Cancelar edición</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="summary-grid">
+            <div class="surface section" aria-labelledby="saldos-title">
+              <div class="section-title">
+                <h2 id="saldos-title">Saldos</h2>
+                <p>Positivo es dinero a favor en el pozo; negativo es deuda.</p>
+              </div>
+              <div class="balance-list" id="balanceList"></div>
+            </div>
+
+            <div class="surface section" aria-labelledby="pendientes-title">
+              <div class="section-title">
+                <h2 id="pendientes-title">Pendientes</h2>
+                <p>Personas que deberían aportar para quedar en cero.</p>
+              </div>
+              <div class="debt-list" id="debtList"></div>
+            </div>
+          </section>
+
+          <section class="surface section" aria-labelledby="movimientos-title">
+            <div class="section-header">
+              <div class="section-title">
+                <h2 id="movimientos-title">Movimientos</h2>
+                <p>Historial editable de entradas y compras.</p>
+              </div>
+            </div>
+
+            <div class="transaction-toolbar">
+              <label>
+                Buscar
+                <input id="searchInput" autocomplete="off" placeholder="Huevos, papas, Elena..." />
+              </label>
+              <div class="filter-group" aria-label="Filtro de movimientos">
+                <button class="active" type="button" data-filter="todos">Todos</button>
+                <button type="button" data-filter="entrada">Entradas</button>
+                <button type="button" data-filter="compra">Compras</button>
+              </div>
+            </div>
+
+            <div class="transaction-list" id="transactionList"></div>
+          </section>
+
+          <section class="surface section" aria-labelledby="reporte-title">
+            <div class="section-header">
+              <div class="section-title">
+                <h2 id="reporte-title">Reporte</h2>
+                <p>Resumen final para compartir de forma clara.</p>
+              </div>
+              <div class="report-actions">
+                <button class="btn secondary" id="copyReportBtn" type="button">Copiar reporte</button>
+                <button class="btn secondary" id="downloadReportBtn" type="button">Descargar .txt</button>
+              </div>
+            </div>
+
+            <div class="report-grid">
+              <textarea id="reportText" readonly aria-label="Reporte generado"></textarea>
+              <div class="metric-stack" id="reportHighlights"></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const STORAGE_KEY = "cuentas.v1";
+      const COLORS = ["#146c63", "#a43d2c", "#bd8624", "#4f6754", "#7a4f2b", "#315c7a", "#8a4a63", "#5f5a2d"];
+
+      const els = {
+        personForm: document.querySelector("#personForm"),
+        personName: document.querySelector("#personName"),
+        peopleList: document.querySelector("#peopleList"),
+        peopleCount: document.querySelector("#peopleCount"),
+        movementForm: document.querySelector("#movementForm"),
+        movementDate: document.querySelector("#movementDate"),
+        movementAmount: document.querySelector("#movementAmount"),
+        movementDescription: document.querySelector("#movementDescription"),
+        entryPerson: document.querySelector("#entryPerson"),
+        entryPersonWrap: document.querySelector("#entryPersonWrap"),
+        participantsWrap: document.querySelector("#participantsWrap"),
+        participantGrid: document.querySelector("#participantGrid"),
+        submitMovementBtn: document.querySelector("#submitMovementBtn"),
+        cancelEditBtn: document.querySelector("#cancelEditBtn"),
+        editNote: document.querySelector("#editNote"),
+        typeButtons: document.querySelectorAll("[data-type]"),
+        selectAllBtn: document.querySelector("#selectAllBtn"),
+        selectNoneBtn: document.querySelector("#selectNoneBtn"),
+        poolAmount: document.querySelector("#poolAmount"),
+        totalEntries: document.querySelector("#totalEntries"),
+        totalPurchases: document.querySelector("#totalPurchases"),
+        saveStatus: document.querySelector("#saveStatus"),
+        balanceList: document.querySelector("#balanceList"),
+        debtList: document.querySelector("#debtList"),
+        transactionList: document.querySelector("#transactionList"),
+        searchInput: document.querySelector("#searchInput"),
+        filterButtons: document.querySelectorAll("[data-filter]"),
+        reportText: document.querySelector("#reportText"),
+        reportHighlights: document.querySelector("#reportHighlights"),
+        copyReportBtn: document.querySelector("#copyReportBtn"),
+        downloadReportBtn: document.querySelector("#downloadReportBtn"),
+        exportDataBtn: document.querySelector("#exportDataBtn"),
+        importDataBtn: document.querySelector("#importDataBtn"),
+        importFile: document.querySelector("#importFile"),
+        resetBtn: document.querySelector("#resetBtn"),
+        demoBtn: document.querySelector("#demoBtn"),
+        toast: document.querySelector("#toast")
+      };
+
+      let state = loadState();
+      let currentType = "entrada";
+      let currentFilter = "todos";
+      let editingId = null;
+      let selectedParticipantIds = new Set(state.people.map((person) => person.id));
+      let toastTimer = null;
+
+      function createId(prefix) {
+        if (window.crypto && window.crypto.randomUUID) {
+          return `${prefix}_${window.crypto.randomUUID()}`;
+        }
+        return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      }
+
+      function todayISO() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return { people: [], transactions: [] };
+          return sanitizeState(JSON.parse(raw));
+        } catch {
+          return { people: [], transactions: [] };
+        }
+      }
+
+      function sanitizeState(nextState) {
+        const people = Array.isArray(nextState.people)
+          ? nextState.people
+              .filter((person) => person && person.id && person.name)
+              .map((person, index) => ({
+                id: String(person.id),
+                name: String(person.name).trim(),
+                color: isSafeColor(person.color) ? person.color : COLORS[index % COLORS.length]
+              }))
+          : [];
+        const personIds = new Set(people.map((person) => person.id));
+        const transactions = Array.isArray(nextState.transactions)
+          ? nextState.transactions
+              .filter((tx) => tx && (tx.type === "entrada" || tx.type === "compra") && Number(tx.amount) > 0)
+              .map((tx) => ({
+                id: String(tx.id || createId("tx")),
+                type: tx.type,
+                description: String(tx.description || defaultDescription(tx.type)).trim(),
+                amount: Number(tx.amount),
+                date: tx.date || todayISO(),
+                personId: tx.type === "entrada" && personIds.has(tx.personId) ? tx.personId : "",
+                participantIds: tx.type === "compra" && Array.isArray(tx.participantIds)
+                  ? tx.participantIds.map(String).filter((id) => personIds.has(id))
+                  : [],
+                createdAt: tx.createdAt || new Date().toISOString(),
+                updatedAt: tx.updatedAt || null
+              }))
+          : [];
+        return { people, transactions };
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          els.saveStatus.textContent = `Guardado local: ${new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}`;
+        } catch {
+          els.saveStatus.textContent = "No se pudo guardar localmente.";
+        }
+      }
+
+      function isSafeColor(value) {
+        return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+      }
+
+      function defaultDescription(type) {
+        return type === "entrada" ? "Entrada de dinero" : "Compra";
+      }
+
+      function parseMoney(value) {
+        let raw = String(value || "").trim().toLowerCase();
+        if (!raw) return NaN;
+        raw = raw.replace(/\s+/g, "").replace(/\$/g, "").replace(/ars/g, "");
+        const multiplier = raw.endsWith("k") ? 1000 : raw.endsWith("m") ? 1000000 : 1;
+        if (multiplier !== 1) raw = raw.slice(0, -1);
+
+        if (raw.includes(",") && raw.includes(".")) {
+          raw = raw.replace(/\./g, "").replace(",", ".");
+        } else if (raw.includes(",")) {
+          raw = raw.replace(",", ".");
+        } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+          raw = raw.replace(/\./g, "");
+        }
+
+        const amount = Number(raw);
+        return Number.isFinite(amount) ? Math.round(amount * multiplier * 100) / 100 : NaN;
+      }
+
+      function formatARS(value) {
+        const amount = Math.abs(value) < 0.005 ? 0 : value;
+        const hasCents = Math.round(amount * 100) % 100 !== 0;
+        return `ARS ${new Intl.NumberFormat("es-AR", {
+          minimumFractionDigits: hasCents ? 2 : 0,
+          maximumFractionDigits: hasCents ? 2 : 0
+        }).format(amount)}`;
+      }
+
+      function formatDate(value) {
+        if (!value) return "Sin fecha";
+        const date = new Date(`${value}T00:00:00`);
+        return new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+      }
+
+      function personName(id) {
+        return state.people.find((person) => person.id === id)?.name || "Persona borrada";
+      }
+
+      function describeParticipants(ids) {
+        const names = ids.map(personName).filter(Boolean);
+        if (!names.length) return "Sin participantes";
+        if (names.length <= 3) return names.join(", ");
+        return `${names.slice(0, 3).join(", ")} y ${names.length - 3} más`;
+      }
+
+      function getLedger() {
+        const byPerson = new Map(
+          state.people.map((person) => [
+            person.id,
+            {
+              ...person,
+              entries: 0,
+              expenses: 0,
+              purchases: [],
+              balance: 0
+            }
+          ])
+        );
+        let totalEntries = 0;
+        let totalPurchases = 0;
+
+        for (const tx of state.transactions) {
+          if (tx.type === "entrada") {
+            totalEntries += tx.amount;
+            const row = byPerson.get(tx.personId);
+            if (row) row.entries += tx.amount;
+            continue;
+          }
+
+          const participantIds = tx.participantIds.filter((id) => byPerson.has(id));
+          if (!participantIds.length) continue;
+          totalPurchases += tx.amount;
+          const share = tx.amount / participantIds.length;
+          for (const id of participantIds) {
+            const row = byPerson.get(id);
+            row.expenses += share;
+            row.purchases.push({ tx, share, participantCount: participantIds.length });
+          }
+        }
+
+        const rows = [...byPerson.values()]
+          .map((row) => ({ ...row, balance: row.entries - row.expenses }))
+          .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name, "es"));
+
+        return {
+          rows,
+          totalEntries,
+          totalPurchases,
+          pool: totalEntries - totalPurchases
+        };
+      }
+
+      function statusForBalance(balance) {
+        if (balance > 0.004) return { label: "A favor", tone: "positive" };
+        if (balance < -0.004) return { label: "Debe", tone: "negative" };
+        return { label: "En cero", tone: "neutral" };
+      }
+
+      function render() {
+        syncSelectedParticipants();
+        renderPeople();
+        renderParticipantChoices();
+        renderMovementType();
+        renderSummary();
+        renderTransactions();
+        renderReport();
+        saveState();
+      }
+
+      function renderPeople() {
+        els.peopleCount.textContent = `${state.people.length} ${state.people.length === 1 ? "anotada" : "anotadas"}`;
+        els.entryPerson.innerHTML = state.people
+          .map((person) => `<option value="${escapeHTML(person.id)}">${escapeHTML(person.name)}</option>`)
+          .join("");
+
+        if (!state.people.length) {
+          els.peopleList.innerHTML = `
+            <div class="empty">
+              <strong>Sin personas todavía</strong>
+              <span>Agregá nombres para empezar a registrar movimientos.</span>
+            </div>
+          `;
+          return;
+        }
+
+        els.peopleList.innerHTML = state.people
+          .map((person) => `
+            <div class="person-row">
+              <span class="person-dot" style="background:${escapeHTML(person.color)}"></span>
+              <input value="${escapeHTML(person.name)}" data-person-name="${escapeHTML(person.id)}" aria-label="Nombre de ${escapeHTML(person.name)}" />
+              <button class="icon-btn" type="button" data-delete-person="${escapeHTML(person.id)}" aria-label="Borrar ${escapeHTML(person.name)}">Borrar</button>
+            </div>
+          `)
+          .join("");
+      }
+
+      function renderParticipantChoices() {
+        if (!state.people.length) {
+          els.participantGrid.innerHTML = `<div class="empty"><strong>No hay personas</strong></div>`;
+          return;
+        }
+        els.participantGrid.innerHTML = state.people
+          .map((person) => `
+            <label class="person-toggle">
+              <input type="checkbox" value="${escapeHTML(person.id)}" ${selectedParticipantIds.has(person.id) ? "checked" : ""} />
+              <span>${escapeHTML(person.name)}</span>
+            </label>
+          `)
+          .join("");
+      }
+
+      function renderMovementType() {
+        els.typeButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.type === currentType);
+        });
+        els.entryPersonWrap.classList.toggle("hidden", currentType !== "entrada");
+        els.participantsWrap.classList.toggle("hidden", currentType !== "compra");
+        els.submitMovementBtn.textContent = editingId
+          ? `Guardar ${currentType === "entrada" ? "entrada" : "compra"}`
+          : `Registrar ${currentType === "entrada" ? "entrada" : "compra"}`;
+        els.cancelEditBtn.classList.toggle("hidden", !editingId);
+        els.editNote.classList.toggle("visible", Boolean(editingId));
+      }
+
+      function renderSummary() {
+        const ledger = getLedger();
+        els.poolAmount.textContent = formatARS(ledger.pool);
+        els.totalEntries.textContent = formatARS(ledger.totalEntries);
+        els.totalPurchases.textContent = formatARS(ledger.totalPurchases);
+
+        if (!ledger.rows.length) {
+          els.balanceList.innerHTML = `<div class="empty"><strong>Sin saldos</strong><span>Agregá personas y movimientos.</span></div>`;
+          els.debtList.innerHTML = `<div class="empty"><strong>Sin pendientes</strong></div>`;
+          return;
+        }
+
+        els.balanceList.innerHTML = ledger.rows
+          .map((row) => {
+            const status = statusForBalance(row.balance);
+            return `
+              <div class="balance-row">
+                <div>
+                  <strong>${escapeHTML(row.name)}</strong>
+                  <small>Puso ${formatARS(row.entries)} · Gastos ${formatARS(row.expenses)}</small>
+                </div>
+                <div>
+                  <div class="amount ${status.tone}">${formatARS(row.balance)}</div>
+                  <span class="status-pill ${status.tone}">${status.label}</span>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+
+        const debtors = ledger.rows.filter((row) => row.balance < -0.004);
+        els.debtList.innerHTML = debtors.length
+          ? debtors
+              .map((row) => `
+                <div class="debt-row">
+                  <div>
+                    <strong>${escapeHTML(row.name)}</strong>
+                    <small>${row.purchases.length} compras asignadas</small>
+                  </div>
+                  <div class="amount negative">${formatARS(Math.abs(row.balance))}</div>
+                </div>
+              `)
+              .join("")
+          : `<div class="empty"><strong>No hay deudas</strong><span>Todos están en cero o con saldo a favor.</span></div>`;
+      }
+
+      function renderTransactions() {
+        const search = els.searchInput.value.trim().toLowerCase();
+        const ordered = [...state.transactions].sort((a, b) => {
+          const byDate = b.date.localeCompare(a.date);
+          return byDate || b.createdAt.localeCompare(a.createdAt);
+        });
+        const filtered = ordered.filter((tx) => {
+          const typeMatch = currentFilter === "todos" || tx.type === currentFilter;
+          if (!typeMatch) return false;
+          if (!search) return true;
+          const haystack = [
+            tx.description,
+            tx.type,
+            tx.personId ? personName(tx.personId) : "",
+            ...(tx.participantIds || []).map(personName)
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(search);
+        });
+
+        if (!filtered.length) {
+          els.transactionList.innerHTML = `
+            <div class="empty">
+              <strong>Sin movimientos para mostrar</strong>
+              <span>${state.transactions.length ? "Probá otro filtro." : "Registrá una entrada o una compra."}</span>
+            </div>
+          `;
+          return;
+        }
+
+        els.transactionList.innerHTML = filtered
+          .map((tx) => {
+            const isPurchase = tx.type === "compra";
+            const participantCount = tx.participantIds?.length || 0;
+            const share = isPurchase && participantCount ? tx.amount / participantCount : 0;
+            const meta = isPurchase
+              ? `${describeParticipants(tx.participantIds)} · ${formatARS(share)} por persona`
+              : `${personName(tx.personId)} agregó dinero`;
+            return `
+              <article class="transaction-card ${isPurchase ? "purchase" : ""}">
+                <div class="transaction-main">
+                  <div class="transaction-title">
+                    <span class="badge ${isPurchase ? "purchase" : ""}">${isPurchase ? "Compra" : "Entrada"}</span>
+                    <strong>${escapeHTML(tx.description)}</strong>
+                  </div>
+                  <div class="transaction-meta">
+                    <span>${formatDate(tx.date)} · ${formatARS(tx.amount)}</span>
+                    <span>${escapeHTML(meta)}</span>
+                  </div>
+                </div>
+                <div class="transaction-actions">
+                  <button class="icon-btn" type="button" data-edit-tx="${escapeHTML(tx.id)}">Editar</button>
+                  <button class="icon-btn" type="button" data-delete-tx="${escapeHTML(tx.id)}">Borrar</button>
+                </div>
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function renderReport() {
+        const text = buildReportText();
+        els.reportText.value = text;
+        const ledger = getLedger();
+        const debtors = ledger.rows.filter((row) => row.balance < -0.004);
+        const creditors = ledger.rows.filter((row) => row.balance > 0.004);
+        els.reportHighlights.innerHTML = `
+          <div class="metric">
+            <span>Pozo disponible</span>
+            <strong>${formatARS(ledger.pool)}</strong>
+          </div>
+          <div class="split-metrics">
+            <div class="micro-metric">
+              <span>Deben aportar</span>
+              <strong>${debtors.length}</strong>
+            </div>
+            <div class="micro-metric">
+              <span>A favor</span>
+              <strong>${creditors.length}</strong>
+            </div>
+          </div>
+          <p class="fine-print">Los saldos se recalculan desde entradas y compras, así que editar un movimiento actualiza todo el reporte.</p>
+        `;
+      }
+
+      function buildReportText() {
+        const ledger = getLedger();
+        const lines = [];
+        lines.push(`CUENTAS - Reporte ${formatDate(todayISO())}`);
+        lines.push("");
+        lines.push(`Pozo disponible: ${formatARS(ledger.pool)}`);
+        lines.push(`Total de entradas: ${formatARS(ledger.totalEntries)}`);
+        lines.push(`Total de compras: ${formatARS(ledger.totalPurchases)}`);
+        lines.push("");
+        lines.push("SALDOS");
+
+        if (!ledger.rows.length) {
+          lines.push("Sin personas anotadas.");
+        } else {
+          for (const row of ledger.rows) {
+            const status = statusForBalance(row.balance);
+            lines.push(`${row.name}: ${status.label} ${formatARS(Math.abs(row.balance))} | puso ${formatARS(row.entries)} | compras ${formatARS(row.expenses)}`);
+          }
+        }
+
+        lines.push("");
+        lines.push("DETALLE POR PERSONA");
+        if (!ledger.rows.length) {
+          lines.push("Sin detalle.");
+        } else {
+          for (const row of ledger.rows.sort((a, b) => a.name.localeCompare(b.name, "es"))) {
+            lines.push("");
+            lines.push(`${row.name}`);
+            lines.push(`Puso: ${formatARS(row.entries)}`);
+            lines.push(`Compras asignadas: ${formatARS(row.expenses)}`);
+            lines.push(`Saldo: ${row.balance < -0.004 ? "Debe" : row.balance > 0.004 ? "A favor" : "En cero"} ${formatARS(Math.abs(row.balance))}`);
+            if (!row.purchases.length) {
+              lines.push("Compras: ninguna");
+            } else {
+              lines.push("Compras:");
+              for (const item of row.purchases.sort((a, b) => a.tx.date.localeCompare(b.tx.date))) {
+                lines.push(`- ${formatDate(item.tx.date)} · ${item.tx.description}: ${formatARS(item.share)} de ${formatARS(item.tx.amount)} (${item.participantCount} personas)`);
+              }
+            }
+          }
+        }
+
+        lines.push("");
+        lines.push("MOVIMIENTOS");
+        if (!state.transactions.length) {
+          lines.push("Sin movimientos.");
+        } else {
+          const movements = [...state.transactions].sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt));
+          for (const tx of movements) {
+            if (tx.type === "entrada") {
+              lines.push(`- ${formatDate(tx.date)} · Entrada · ${personName(tx.personId)} · ${tx.description} · ${formatARS(tx.amount)}`);
+            } else {
+              lines.push(`- ${formatDate(tx.date)} · Compra · ${tx.description} · ${formatARS(tx.amount)} · ${describeParticipants(tx.participantIds)}`);
+            }
+          }
+        }
+
+        return lines.join("\n");
+      }
+
+      function syncSelectedParticipants() {
+        const validIds = new Set(state.people.map((person) => person.id));
+        selectedParticipantIds = new Set([...selectedParticipantIds].filter((id) => validIds.has(id)));
+        if (!editingId && currentType === "compra" && selectedParticipantIds.size === 0) {
+          state.people.forEach((person) => selectedParticipantIds.add(person.id));
+        }
+      }
+
+      function setType(type) {
+        currentType = type;
+        if (!editingId && type === "compra" && selectedParticipantIds.size === 0) {
+          state.people.forEach((person) => selectedParticipantIds.add(person.id));
+        }
+        renderMovementType();
+        renderParticipantChoices();
+      }
+
+      function resetMovementForm() {
+        editingId = null;
+        currentType = "entrada";
+        els.movementDate.value = todayISO();
+        els.movementAmount.value = "";
+        els.movementDescription.value = "";
+        selectedParticipantIds = new Set(state.people.map((person) => person.id));
+        renderMovementType();
+        renderParticipantChoices();
+      }
+
+      function startEditTransaction(id) {
+        const tx = state.transactions.find((item) => item.id === id);
+        if (!tx) return;
+        editingId = id;
+        currentType = tx.type;
+        els.movementDate.value = tx.date;
+        els.movementAmount.value = formatInputAmount(tx.amount);
+        els.movementDescription.value = tx.description;
+        if (tx.type === "entrada") {
+          els.entryPerson.value = tx.personId;
+        } else {
+          selectedParticipantIds = new Set(tx.participantIds);
+        }
+        renderMovementType();
+        renderParticipantChoices();
+        els.movementForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        showToast("Movimiento listo para editar.");
+      }
+
+      function formatInputAmount(amount) {
+        return new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 }).format(amount);
+      }
+
+      function addPerson(name) {
+        const cleanName = name.trim();
+        if (!cleanName) return showToast("Escribí un nombre.");
+        const exists = state.people.some((person) => person.name.toLowerCase() === cleanName.toLowerCase());
+        if (exists) return showToast("Esa persona ya está anotada.");
+        const person = {
+          id: createId("person"),
+          name: cleanName,
+          color: COLORS[state.people.length % COLORS.length]
+        };
+        state.people.push(person);
+        selectedParticipantIds.add(person.id);
+        els.personName.value = "";
+        render();
+        showToast(`${cleanName} agregada.`);
+      }
+
+      function deletePerson(id) {
+        const person = state.people.find((item) => item.id === id);
+        if (!person) return;
+        const isUsed = state.transactions.some((tx) => tx.personId === id || tx.participantIds?.includes(id));
+        if (isUsed) {
+          showToast("No se puede borrar una persona con movimientos. Primero editá o borrá esos movimientos.");
+          return;
+        }
+        state.people = state.people.filter((item) => item.id !== id);
+        selectedParticipantIds.delete(id);
+        render();
+        showToast(`${person.name} borrada.`);
+      }
+
+      function renamePerson(id, name) {
+        const person = state.people.find((item) => item.id === id);
+        const cleanName = name.trim();
+        if (!person || !cleanName) {
+          renderPeople();
+          return;
+        }
+        person.name = cleanName;
+        render();
+      }
+
+      function handleMovementSubmit(event) {
+        event.preventDefault();
+        if (!state.people.length) return showToast("Agregá al menos una persona.");
+
+        const amount = parseMoney(els.movementAmount.value);
+        if (!Number.isFinite(amount) || amount <= 0) return showToast("Ingresá un monto válido.");
+
+        const date = els.movementDate.value || todayISO();
+        const description = els.movementDescription.value.trim() || defaultDescription(currentType);
+        const oldTx = editingId ? state.transactions.find((tx) => tx.id === editingId) : null;
+        const base = {
+          id: editingId || createId("tx"),
+          type: currentType,
+          description,
+          amount,
+          date,
+          createdAt: oldTx?.createdAt || new Date().toISOString(),
+          updatedAt: editingId ? new Date().toISOString() : null
+        };
+
+        let tx;
+        if (currentType === "entrada") {
+          const personId = els.entryPerson.value;
+          if (!personId) return showToast("Elegí quién agrega dinero.");
+          tx = { ...base, personId, participantIds: [] };
+        } else {
+          const participantIds = [...selectedParticipantIds].filter((id) => state.people.some((person) => person.id === id));
+          if (!participantIds.length) return showToast("Elegí al menos una persona para repartir la compra.");
+          tx = { ...base, personId: "", participantIds };
+        }
+
+        if (editingId) {
+          state.transactions = state.transactions.map((item) => (item.id === editingId ? tx : item));
+          showToast("Movimiento actualizado.");
+        } else {
+          state.transactions.push(tx);
+          showToast("Movimiento registrado.");
+        }
+
+        resetMovementForm();
+        render();
+      }
+
+      function deleteTransaction(id) {
+        const tx = state.transactions.find((item) => item.id === id);
+        if (!tx) return;
+        const ok = confirm(`¿Borrar "${tx.description}"?`);
+        if (!ok) return;
+        state.transactions = state.transactions.filter((item) => item.id !== id);
+        if (editingId === id) resetMovementForm();
+        render();
+        showToast("Movimiento borrado.");
+      }
+
+      async function copyReport() {
+        const text = buildReportText();
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast("Reporte copiado.");
+        } catch {
+          els.reportText.focus();
+          els.reportText.select();
+          document.execCommand("copy");
+          showToast("Reporte seleccionado para copiar.");
+        }
+      }
+
+      function downloadFile(filename, text, type) {
+        const blob = new Blob([text], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function loadDemo() {
+        const ok = !state.people.length && !state.transactions.length
+          ? true
+          : confirm("¿Reemplazar los datos actuales por el ejemplo?");
+        if (!ok) return;
+
+        const marisol = { id: createId("person"), name: "Marisol", color: COLORS[0] };
+        const elena = { id: createId("person"), name: "Elena", color: COLORS[1] };
+        const cacha = { id: createId("person"), name: "Cacha", color: COLORS[2] };
+        const bety = { id: createId("person"), name: "Bety", color: COLORS[3] };
+        const people = [marisol, elena, cacha, bety];
+        const all = people.map((person) => person.id);
+        state = {
+          people,
+          transactions: [
+            demoTx("entrada", "Entrada Marisol", 200000, "2026-06-01", marisol.id),
+            demoTx("entrada", "Entrada Elena", 150000, "2026-06-01", elena.id),
+            demoTx("compra", "Verduras", 20000, "2026-06-01", null, all),
+            demoTx("compra", "Algodón", 10000, "2026-06-02", null, [marisol.id, elena.id, bety.id]),
+            demoTx("entrada", "Entrada Cacha", 100000, "2026-06-02", cacha.id),
+            demoTx("entrada", "Entrada Bety", 80000, "2026-06-02", bety.id),
+            demoTx("compra", "Comida noche X", 60000, "2026-06-02", null, all)
+          ]
+        };
+        resetMovementForm();
+        render();
+        showToast("Ejemplo cargado.");
+      }
+
+      function demoTx(type, description, amount, date, personId, participantIds = []) {
+        return {
+          id: createId("tx"),
+          type,
+          description,
+          amount,
+          date,
+          personId: personId || "",
+          participantIds,
+          createdAt: new Date().toISOString(),
+          updatedAt: null
+        };
+      }
+
+      function resetAll() {
+        if (!state.people.length && !state.transactions.length) return;
+        const ok = confirm("¿Borrar todas las personas y movimientos?");
+        if (!ok) return;
+        state = { people: [], transactions: [] };
+        resetMovementForm();
+        render();
+        showToast("Datos borrados.");
+      }
+
+      function importData(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const imported = sanitizeState(JSON.parse(reader.result));
+            const ok = confirm("¿Reemplazar los datos actuales por el archivo importado?");
+            if (!ok) return;
+            state = imported;
+            resetMovementForm();
+            render();
+            showToast("Datos importados.");
+          } catch {
+            showToast("No pude leer ese archivo.");
+          } finally {
+            els.importFile.value = "";
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function showToast(message) {
+        els.toast.textContent = message;
+        els.toast.classList.add("visible");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => els.toast.classList.remove("visible"), 2600);
+      }
+
+      function escapeHTML(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      els.personForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        addPerson(els.personName.value);
+      });
+
+      els.peopleList.addEventListener("change", (event) => {
+        const id = event.target.dataset.personName;
+        if (id) renamePerson(id, event.target.value);
+      });
+
+      els.peopleList.addEventListener("click", (event) => {
+        const id = event.target.dataset.deletePerson;
+        if (id) deletePerson(id);
+      });
+
+      els.typeButtons.forEach((button) => {
+        button.addEventListener("click", () => setType(button.dataset.type));
+      });
+
+      els.participantGrid.addEventListener("change", (event) => {
+        if (event.target.type !== "checkbox") return;
+        if (event.target.checked) {
+          selectedParticipantIds.add(event.target.value);
+        } else {
+          selectedParticipantIds.delete(event.target.value);
+        }
+      });
+
+      els.selectAllBtn.addEventListener("click", () => {
+        selectedParticipantIds = new Set(state.people.map((person) => person.id));
+        renderParticipantChoices();
+      });
+
+      els.selectNoneBtn.addEventListener("click", () => {
+        selectedParticipantIds = new Set();
+        renderParticipantChoices();
+      });
+
+      els.movementForm.addEventListener("submit", handleMovementSubmit);
+      els.cancelEditBtn.addEventListener("click", () => {
+        resetMovementForm();
+        showToast("Edición cancelada.");
+      });
+
+      els.transactionList.addEventListener("click", (event) => {
+        const editId = event.target.dataset.editTx;
+        const deleteId = event.target.dataset.deleteTx;
+        if (editId) startEditTransaction(editId);
+        if (deleteId) deleteTransaction(deleteId);
+      });
+
+      els.searchInput.addEventListener("input", renderTransactions);
+      els.filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          currentFilter = button.dataset.filter;
+          els.filterButtons.forEach((item) => item.classList.toggle("active", item === button));
+          renderTransactions();
+        });
+      });
+
+      els.copyReportBtn.addEventListener("click", copyReport);
+      els.downloadReportBtn.addEventListener("click", () => downloadFile("cuentas-reporte.txt", buildReportText(), "text/plain;charset=utf-8"));
+      els.exportDataBtn.addEventListener("click", () => downloadFile("cuentas-datos.json", JSON.stringify(state, null, 2), "application/json;charset=utf-8"));
+      els.importDataBtn.addEventListener("click", () => els.importFile.click());
+      els.importFile.addEventListener("change", () => importData(els.importFile.files[0]));
+      els.resetBtn.addEventListener("click", resetAll);
+      els.demoBtn.addEventListener("click", loadDemo);
+
+      els.movementDate.value = todayISO();
+      render();
+    </script>
+  </body>
+</html>
