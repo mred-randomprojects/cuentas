@@ -1,4 +1,4 @@
-export type MovementType = "entrada" | "compra";
+export type MovementType = "entrada" | "compra" | "gasto_pagado";
 
 export interface Person {
   id: string;
@@ -13,9 +13,9 @@ export interface Transaction {
   amount: number;
   /** ISO date (YYYY-MM-DD). */
   date: string;
-  /** Person who added money — only for `entrada`. */
+  /** Person who contributed the money — for `entrada` and `gasto_pagado`. */
   personId: string;
-  /** People the cost is split between — only for `compra`. */
+  /** People the cost is split between — for `compra` and `gasto_pagado`. */
   participantIds: string[];
   createdAt: string;
   updatedAt: string | null;
@@ -37,22 +37,35 @@ export interface PurchaseShare {
 }
 
 export interface LedgerRow extends Person {
-  /** Money this person added to the pool. */
+  /** Money this person added to the shared pool. */
   entries: number;
+  /** Expenses this person paid directly instead of using the shared pool. */
+  directPayments: number;
+  /** Total value contributed: pool entries + directly paid expenses. */
+  contributions: number;
   /** This person's share of all purchases they took part in. */
   expenses: number;
   /** The entradas this person made. */
   entryList: Transaction[];
+  /** The shared expenses this person paid directly. */
+  paymentList: Transaction[];
   /** The purchases this person took part in, with their share. */
   purchases: PurchaseShare[];
-  /** entries - expenses. Positive = credit, negative = owes. */
+  /** contributions - expenses. Positive = credit, negative = owes. */
   balance: number;
 }
 
 export interface Ledger {
   rows: LedgerRow[];
+  /** Cash added to the shared pool. */
   totalEntries: number;
+  /** All shared expenses, whether paid from the pool or by a person. */
   totalPurchases: number;
+  /** Shared expenses paid directly by a person. */
+  totalDirectPayments: number;
+  /** Shared expenses paid from the pool. */
+  totalPoolPurchases: number;
+  /** Physical cash currently available in the shared pool. */
   pool: number;
 }
 

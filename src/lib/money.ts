@@ -28,6 +28,42 @@ export function parseMoney(value: string | number | null | undefined): number {
   return Number.isFinite(amount) ? Math.round(amount * multiplier * 100) / 100 : NaN;
 }
 
+/** Converts a peso amount to integer cents for exact accounting. */
+export function toCents(amount: number): number {
+  return Math.round(amount * 100);
+}
+
+/** Converts integer cents back to the persisted/displayed peso amount. */
+export function fromCents(cents: number): number {
+  return cents / 100;
+}
+
+export interface MoneyShare {
+  personId: string;
+  amount: number;
+}
+
+/**
+ * Splits an amount into exact cent-denominated shares.
+ *
+ * When a cent cannot be divided evenly, the first participants in the stored
+ * order receive one extra cent. This makes the allocation deterministic and
+ * guarantees that the shares always add up to the original amount.
+ */
+export function splitMoney(amount: number, participantIds: string[]): MoneyShare[] {
+  const ids = [...new Set(participantIds)];
+  if (!ids.length) return [];
+
+  const totalCents = toCents(amount);
+  const baseCents = Math.floor(totalCents / ids.length);
+  const remainder = totalCents % ids.length;
+
+  return ids.map((personId, index) => ({
+    personId,
+    amount: fromCents(baseCents + (index < remainder ? 1 : 0)),
+  }));
+}
+
 export function formatARS(value: number): string {
   const amount = Math.abs(value) < 0.005 ? 0 : value;
   const hasCents = Math.round(amount * 100) % 100 !== 0;

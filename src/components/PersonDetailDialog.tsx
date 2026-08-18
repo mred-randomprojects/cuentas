@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, HandCoins, Trash2 } from "lucide-react";
 import type { LedgerRow, Person } from "../types";
 import { statusForBalance } from "../lib/ledger";
 import { formatARS, formatDate } from "../lib/money";
+import { describeParticipants, personName } from "../lib/people";
 import { useToast } from "./Toast";
 import {
   Dialog,
@@ -47,8 +48,12 @@ export function PersonDetailDialog({
   if (!row) return null;
 
   const status = statusForBalance(row.balance);
-  const hasMovements = row.entryList.length > 0 || row.purchases.length > 0;
+  const hasMovements =
+    row.entryList.length > 0 ||
+    row.paymentList.length > 0 ||
+    row.purchases.length > 0;
   const entradas = [...row.entryList].sort((a, b) => b.date.localeCompare(a.date));
+  const pagos = [...row.paymentList].sort((a, b) => b.date.localeCompare(a.date));
   const compras = [...row.purchases].sort((a, b) =>
     b.tx.date.localeCompare(a.tx.date),
   );
@@ -102,7 +107,7 @@ export function PersonDetailDialog({
 
         {/* Summary */}
         <div className="grid grid-cols-3 gap-2">
-          <Stat label="Puso" value={formatARS(row.entries)} />
+          <Stat label="Aportó" value={formatARS(row.contributions)} />
           <Stat label="Gastos" value={formatARS(row.expenses)} />
           <Stat
             label="Saldo"
@@ -139,9 +144,9 @@ export function PersonDetailDialog({
         {/* Movements */}
         <div className="max-h-[40dvh] space-y-4 overflow-y-auto pr-1">
           <Section
-            title="Entradas"
+            title="Entradas al pozo"
             count={entradas.length}
-            empty="Sin entradas registradas."
+            empty="No agregó dinero al pozo."
           >
             {entradas.map((tx) => (
               <MovementRow
@@ -159,7 +164,28 @@ export function PersonDetailDialog({
           </Section>
 
           <Section
-            title="Gastos"
+            title="Gastos que pagó"
+            count={pagos.length}
+            empty="No pagó gastos directamente."
+          >
+            {pagos.map((tx) => (
+              <MovementRow
+                key={tx.id}
+                onClick={() => openMovement(tx.id)}
+                icon={<HandCoins className="size-4 text-[hsl(var(--warn))]" />}
+                title={tx.description}
+                subtitle={`${formatDate(tx.date)} · Para ${describeParticipants(
+                  people,
+                  tx.participantIds,
+                )}`}
+                amount={formatARS(tx.amount)}
+                amountClass="text-[hsl(var(--warn))]"
+              />
+            ))}
+          </Section>
+
+          <Section
+            title="Gastos asignados"
             count={compras.length}
             empty="No participó de ningún gasto."
           >
@@ -171,9 +197,11 @@ export function PersonDetailDialog({
                   <ArrowUpRight className="size-4 text-[hsl(var(--negative))]" />
                 }
                 title={tx.description}
-                subtitle={`${formatDate(tx.date)} · ${formatARS(
-                  tx.amount,
-                )} entre ${participantCount}`}
+                subtitle={`${formatDate(tx.date)} · ${
+                  tx.type === "gasto_pagado"
+                    ? `Pagó ${personName(people, tx.personId)}`
+                    : "Del pozo"
+                } · ${formatARS(tx.amount)} entre ${participantCount}`}
                 amount={formatARS(share)}
                 amountClass="text-[hsl(var(--negative))]"
               />

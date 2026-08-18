@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { Person, Transaction } from "../types";
-import { formatARS, formatDate } from "../lib/money";
+import { formatARS, formatDate, splitMoney } from "../lib/money";
 import { describeParticipants, personName } from "../lib/people";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
@@ -18,27 +18,53 @@ export function TransactionCard({
   onEdit,
   onDelete,
 }: TransactionCardProps) {
-  const isPurchase = tx.type === "compra";
+  const isPurchase = tx.type !== "entrada";
+  const isDirectPayment = tx.type === "gasto_pagado";
   const participantCount = tx.participantIds.length;
-  const share = isPurchase && participantCount ? tx.amount / participantCount : 0;
-  const meta = isPurchase
-    ? `${describeParticipants(people, tx.participantIds)} · ${formatARS(share)} por persona`
-    : `${personName(people, tx.personId)} agregó dinero`;
+  const shares = isPurchase ? splitMoney(tx.amount, tx.participantIds) : [];
+  const shareAmounts = shares.map((item) => item.amount);
+  const shareLabel =
+    participantCount === 0
+      ? "Sin participantes"
+      : Math.min(...shareAmounts) === Math.max(...shareAmounts)
+        ? `${formatARS(shareAmounts[0] ?? 0)} por persona`
+        : `${formatARS(Math.min(...shareAmounts))}–${formatARS(
+            Math.max(...shareAmounts),
+          )} por persona`;
+  const meta = !isPurchase
+    ? `${personName(people, tx.personId)} agregó dinero al pozo`
+    : isDirectPayment
+      ? `${personName(people, tx.personId)} pagó · ${describeParticipants(
+          people,
+          tx.participantIds,
+        )} · ${shareLabel}`
+      : `${describeParticipants(people, tx.participantIds)} · ${shareLabel}`;
+
+  const badgeVariant = !isPurchase
+    ? "positive"
+    : isDirectPayment
+      ? "warning"
+      : "negative";
+  const badgeLabel = !isPurchase
+    ? "Entrada"
+    : isDirectPayment
+      ? "Pagó alguien"
+      : "Gasto del pozo";
 
   return (
     <article
       className={cn(
         "flex items-start justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm",
-        isPurchase
-          ? "border-l-4 border-l-[hsl(var(--negative))]"
-          : "border-l-4 border-l-[hsl(var(--positive))]",
+        !isPurchase
+          ? "border-l-4 border-l-[hsl(var(--positive))]"
+          : isDirectPayment
+            ? "border-l-4 border-l-[hsl(var(--warn))]"
+            : "border-l-4 border-l-[hsl(var(--negative))]",
       )}
     >
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={isPurchase ? "negative" : "positive"}>
-            {isPurchase ? "Gasto" : "Entrada"}
-          </Badge>
+          <Badge variant={badgeVariant}>{badgeLabel}</Badge>
           <strong className="break-words text-sm font-semibold">
             {tx.description}
           </strong>

@@ -1,14 +1,16 @@
 import type { AppData, MovementType, Person, Transaction } from "../types";
 import { colorForIndex, isSafeColor } from "./colors";
 import { createId } from "./ids";
-import { todayISO } from "./money";
+import { fromCents, toCents, todayISO } from "./money";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
 function defaultDescription(type: MovementType): string {
-  return type === "entrada" ? "Entrada de dinero" : "Gasto";
+  if (type === "entrada") return "Entrada de dinero";
+  if (type === "gasto_pagado") return "Gasto pagado por una persona";
+  return "Gasto";
 }
 
 export function emptyAppData(): AppData {
@@ -50,24 +52,35 @@ export function sanitizeAppData(input: unknown): AppData {
   rawTransactions.forEach((entry) => {
     if (!isObject(entry)) return;
     const type = entry.type;
-    if (type !== "entrada" && type !== "compra") return;
-    const amount = Number(entry.amount);
-    if (!(amount > 0)) return;
+    if (type !== "entrada" && type !== "compra" && type !== "gasto_pagado") {
+      return;
+    }
+    const amountCents = toCents(Number(entry.amount));
+    if (!Number.isSafeInteger(amountCents) || amountCents <= 0) return;
+    const amount = fromCents(amountCents);
 
     const descriptionRaw =
       typeof entry.description === "string" ? entry.description.trim() : "";
     const date =
       typeof entry.date === "string" && entry.date ? entry.date : todayISO();
+    const needsPayer = type === "entrada" || type === "gasto_pagado";
+    const needsParticipants = type !== "entrada";
     const personId =
-      type === "entrada" &&
-      typeof entry.personId === "string" &&
-      personIds.has(entry.personId)
-        ? entry.personId
-        : "";
-    const participantIds =
-      type === "compra" && Array.isArray(entry.participantIds)
-        ? entry.participantIds.map(String).filter((id) => personIds.has(id))
-        : [];
+      needsPayer && typeof entry.personId === "string" ? entry.personId : "";
+    if (needsPayer && !personIds.has(personId)) return;
+
+    const rawParticipantIds = needsParticipants
+      ? Array.isArray(entry.participantIds)
+        ? [...new Set(entry.participantIds.map(String))]
+        : []
+      : [];
+    if (
+      needsParticipants &&
+      (!rawParticipantIds.length || rawParticipantIds.some((id) => !personIds.has(id)))
+    ) {
+      return;
+    }
+    const participantIds = rawParticipantIds;
 
     transactions.push({
       id: entry.id != null ? String(entry.id) : createId("tx"),

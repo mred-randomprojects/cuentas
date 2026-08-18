@@ -5,60 +5,120 @@ import type {
   Person,
   Transaction,
 } from "../types";
+import { fromCents, splitMoney, toCents } from "./money";
 
 /** Threshold below which a balance is treated as exactly zero. */
 const EPSILON = 0.004;
 
 /**
  * Computes per-person balances from the list of transactions.
- * - `entrada` adds to the person's `entries`.
- * - `compra` splits its amount equally between its (still-existing) participants.
- * Mirrors the original cuentas calculation, with each person's own movements
- * collected so a detail view can list them.
+ * - `entrada` adds cash to the pool and credit to the contributor.
+ * - `compra` removes cash from the pool and assigns the expense.
+ * - `gasto_pagado` credits its payer and assigns the expense without changing
+ *   the pool. It is one atomic movement rather than a linked entry + purchase.
+ *
+ * All arithmetic is performed in integer cents. Uneven divisions distribute
+ * their remainder deterministically, so the individual shares always add up
+ * exactly to the transaction amount.
  */
 export function getLedger(people: Person[], transactions: Transaction[]): Ledger {
-  const byPerson = new Map<string, LedgerRow>(
+  interface Accumulator {
+    row: LedgerRow;
+    entryCents: number;
+    directPaymentCents: number;
+    expenseCents: number;
+  }
+
+  const byPerson = new Map<string, Accumulator>(
     people.map((person) => [
       person.id,
-      { ...person, entries: 0, expenses: 0, entryList: [], purchases: [], balance: 0 },
+      {
+        row: {
+          ...person,
+          entries: 0,
+          directPayments: 0,
+          contributions: 0,
+          expenses: 0,
+          entryList: [],
+          paymentList: [],
+          purchases: [],
+          balance: 0,
+        },
+        entryCents: 0,
+        directPaymentCents: 0,
+        expenseCents: 0,
+      },
     ]),
   );
 
-  let totalEntries = 0;
-  let totalPurchases = 0;
+  let totalEntryCents = 0;
+  let totalPurchaseCents = 0;
+  let totalDirectPaymentCents = 0;
+  let totalPoolPurchaseCents = 0;
 
   for (const tx of transactions) {
+    const amountCents = toCents(tx.amount);
+    if (amountCents <= 0) continue;
+
     if (tx.type === "entrada") {
-      totalEntries += tx.amount;
-      const row = byPerson.get(tx.personId);
-      if (row) {
-        row.entries += tx.amount;
-        row.entryList.push(tx);
-      }
+      const account = byPerson.get(tx.personId);
+      if (!account) continue;
+      totalEntryCents += amountCents;
+      account.entryCents += amountCents;
+      account.row.entryList.push(tx);
       continue;
     }
 
-    const participantIds = tx.participantIds.filter((id) => byPerson.has(id));
-    if (!participantIds.length) continue;
-    totalPurchases += tx.amount;
-    const share = tx.amount / participantIds.length;
-    for (const id of participantIds) {
-      const row = byPerson.get(id);
-      if (!row) continue;
-      row.expenses += share;
-      row.purchases.push({ tx, share, participantCount: participantIds.length });
+    const participantIds = [...new Set(tx.participantIds)];
+    if (
+      !participantIds.length ||
+      participantIds.some((id) => !byPerson.has(id))
+    ) {
+      continue;
+    }
+
+    if (tx.type === "gasto_pagado") {
+      const payer = byPerson.get(tx.personId);
+      if (!payer) continue;
+      payer.directPaymentCents += amountCents;
+      payer.row.paymentList.push(tx);
+      totalDirectPaymentCents += amountCents;
+    } else {
+      totalPoolPurchaseCents += amountCents;
+    }
+
+    totalPurchaseCents += amountCents;
+    const shares = splitMoney(fromCents(amountCents), participantIds);
+    for (const item of shares) {
+      const account = byPerson.get(item.personId);
+      if (!account) continue;
+      account.expenseCents += toCents(item.amount);
+      account.row.purchases.push({
+        tx,
+        share: item.amount,
+        participantCount: participantIds.length,
+      });
     }
   }
 
   const rows = [...byPerson.values()]
-    .map((row) => ({ ...row, balance: row.entries - row.expenses }))
+    .map(({ row, entryCents, directPaymentCents, expenseCents }) => ({
+      ...row,
+      entries: fromCents(entryCents),
+      directPayments: fromCents(directPaymentCents),
+      contributions: fromCents(entryCents + directPaymentCents),
+      expenses: fromCents(expenseCents),
+      balance: fromCents(entryCents + directPaymentCents - expenseCents),
+    }))
     .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name, "es"));
 
   return {
     rows,
-    totalEntries,
-    totalPurchases,
-    pool: totalEntries - totalPurchases,
+    totalEntries: fromCents(totalEntryCents),
+    totalPurchases: fromCents(totalPurchaseCents),
+    totalDirectPayments: fromCents(totalDirectPaymentCents),
+    totalPoolPurchases: fromCents(totalPoolPurchaseCents),
+    pool: fromCents(totalEntryCents - totalPoolPurchaseCents),
   };
 }
 

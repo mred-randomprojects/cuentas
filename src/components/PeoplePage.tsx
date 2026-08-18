@@ -115,7 +115,10 @@ export function PeoplePage({
             <div className="grid gap-2 sm:grid-cols-2">
               {ledger.rows.map((row) => {
                 const status = statusForBalance(row.balance);
-                const used = row.entryList.length > 0 || row.purchases.length > 0;
+                const used =
+                  row.entryList.length > 0 ||
+                  row.paymentList.length > 0 ||
+                  row.purchases.length > 0;
                 return (
                   <div
                     key={row.id}

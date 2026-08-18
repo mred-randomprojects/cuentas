@@ -54,7 +54,7 @@ export function DashboardPage({
         <div className="grid grid-cols-2 gap-4 md:col-span-2">
           <Card>
             <CardContent className="flex flex-col gap-1 p-5">
-              <span className="text-sm text-muted-foreground">Entradas</span>
+              <span className="text-sm text-muted-foreground">Entradas al pozo</span>
               <strong className="font-serif text-2xl font-bold text-[hsl(var(--positive))]">
                 {formatARS(ledger.totalEntries)}
               </strong>
@@ -66,6 +66,10 @@ export function DashboardPage({
               <strong className="font-serif text-2xl font-bold text-[hsl(var(--negative))]">
                 {formatARS(ledger.totalPurchases)}
               </strong>
+              <span className="text-xs text-muted-foreground">
+                Del pozo {formatARS(ledger.totalPoolPurchases)} · Pagados por alguien{" "}
+                {formatARS(ledger.totalDirectPayments)}
+              </span>
             </CardContent>
           </Card>
         </div>
@@ -106,7 +110,7 @@ export function DashboardPage({
                         <div className="min-w-0">
                           <p className="truncate font-semibold">{row.name}</p>
                           <p className="truncate text-xs text-muted-foreground">
-                            Puso {formatARS(row.entries)} · Gastos{" "}
+                            Aportó {formatARS(row.contributions)} · Gastos{" "}
                             {formatARS(row.expenses)}
                           </p>
                         </div>
@@ -170,7 +174,7 @@ export function DashboardPage({
           <div className="space-y-1">
             <CardTitle>Movimientos</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Historial de entradas y gastos.
+              Historial de entradas, gastos del pozo y gastos pagados.
             </p>
           </div>
           <Button onClick={onNewMovement} size="sm">

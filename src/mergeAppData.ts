@@ -44,10 +44,16 @@ export function mergeAppData(local: AppData, cloud: AppData): AppData {
 
   const transactions = [...txMap.values()]
     .filter((tx) => !deletedIds.has(tx.id))
-    .map((tx) => ({
-      ...tx,
-      participantIds: tx.participantIds.filter((id) => personIds.has(id)),
-    }));
+    .filter((tx) => {
+      if (tx.type === "entrada") return personIds.has(tx.personId);
+
+      const participantsExist =
+        tx.participantIds.length > 0 &&
+        tx.participantIds.every((id) => personIds.has(id));
+      if (!participantsExist) return false;
+
+      return tx.type === "compra" || personIds.has(tx.personId);
+    });
 
   return {
     people,

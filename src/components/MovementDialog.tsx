@@ -1,7 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { MovementType, Person, Transaction } from "../types";
 import type { TransactionInput } from "../lib/operations";
-import { formatARS, formatInputAmount, parseMoney, todayISO } from "../lib/money";
+import {
+  formatARS,
+  formatInputAmount,
+  parseMoney,
+  splitMoney,
+  toCents,
+  todayISO,
+} from "../lib/money";
 import { useToast } from "./Toast";
 import { cn } from "@/lib/utils";
 import {
@@ -39,7 +46,7 @@ export function MovementDialog({
   const [date, setDate] = useState(todayISO());
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [entryPersonId, setEntryPersonId] = useState("");
+  const [payerId, setPayerId] = useState("");
   const [participants, setParticipants] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -49,12 +56,12 @@ export function MovementDialog({
       setDate(editing.date);
       setAmount(formatInputAmount(editing.amount));
       setDescription(editing.description);
-      setEntryPersonId(
-        editing.type === "entrada" ? editing.personId : people[0]?.id ?? "",
+      setPayerId(
+        editing.type !== "compra" ? editing.personId : people[0]?.id ?? "",
       );
       setParticipants(
         new Set(
-          editing.type === "compra"
+          editing.type !== "entrada"
             ? editing.participantIds
             : people.map((person) => person.id),
         ),
@@ -64,7 +71,7 @@ export function MovementDialog({
       setDate(todayISO());
       setAmount("");
       setDescription("");
-      setEntryPersonId(people[0]?.id ?? "");
+      setPayerId(people[0]?.id ?? "");
       setParticipants(new Set(people.map((person) => person.id)));
     }
     // Only re-initialise when the dialog opens or the edited movement changes.
@@ -78,8 +85,11 @@ export function MovementDialog({
     people.some((person) => person.id === id),
   ).length;
   const sharePreview =
-    type === "compra" && Number.isFinite(parsedAmount) && participantCount > 0
-      ? parsedAmount / participantCount
+    type !== "entrada" && Number.isFinite(parsedAmount) && participantCount > 0
+      ? splitMoney(
+          parsedAmount,
+          [...participants].filter((id) => people.some((person) => person.id === id)),
+        )
       : null;
 
   function toggleParticipant(id: string) {
@@ -96,43 +106,44 @@ export function MovementDialog({
       show("Agregá al menos una persona.");
       return;
     }
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    if (
+      !Number.isFinite(parsedAmount) ||
+      !Number.isSafeInteger(toCents(parsedAmount)) ||
+      parsedAmount <= 0
+    ) {
       show("Ingresá un monto válido.");
       return;
     }
 
-    if (type === "entrada") {
-      if (!entryPersonId) {
-        show("Elegí quién agrega dinero.");
-        return;
-      }
-      onSubmit({
-        id: editing?.id,
-        type,
-        description: description.trim() || "Entrada de dinero",
-        amount: parsedAmount,
-        date: date || todayISO(),
-        personId: entryPersonId,
-        participantIds: [],
-      });
-    } else {
-      const participantIds = [...participants].filter((id) =>
-        people.some((person) => person.id === id),
-      );
-      if (!participantIds.length) {
-        show("Elegí al menos una persona para repartir el gasto.");
-        return;
-      }
-      onSubmit({
-        id: editing?.id,
-        type,
-        description: description.trim() || "Gasto",
-        amount: parsedAmount,
-        date: date || todayISO(),
-        personId: "",
-        participantIds,
-      });
+    const needsPayer = type !== "compra";
+    const needsParticipants = type !== "entrada";
+    if (needsPayer && !people.some((person) => person.id === payerId)) {
+      show(type === "entrada" ? "Elegí quién agrega dinero." : "Elegí quién pagó.");
+      return;
     }
+    const participantIds = [...participants].filter((id) =>
+      people.some((person) => person.id === id),
+    );
+    if (needsParticipants && !participantIds.length) {
+      show("Elegí al menos una persona para repartir el gasto.");
+      return;
+    }
+
+    const fallbackDescription =
+      type === "entrada"
+        ? "Entrada de dinero"
+        : type === "gasto_pagado"
+          ? "Gasto pagado por una persona"
+          : "Gasto";
+    onSubmit({
+      id: editing?.id,
+      type,
+      description: description.trim() || fallbackDescription,
+      amount: parsedAmount,
+      date: date || todayISO(),
+      personId: needsPayer ? payerId : "",
+      participantIds: needsParticipants ? participantIds : [],
+    });
 
     onOpenChange(false);
   }
@@ -141,22 +152,31 @@ export function MovementDialog({
     ? "Guardar cambios"
     : type === "entrada"
       ? "Registrar entrada"
-      : "Registrar gasto";
+      : type === "gasto_pagado"
+        ? "Registrar pago"
+        : "Registrar gasto";
+
+  const typeHelp =
+    type === "entrada"
+      ? "Suma dinero al pozo y deja ese monto a favor de quien lo aporta."
+      : type === "compra"
+        ? "Descuenta dinero del pozo y reparte el gasto entre los participantes."
+        : "No toca el pozo: acredita a quien pagó y reparte el mismo gasto.";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>
             {editing ? "Editar movimiento" : "Nuevo movimiento"}
           </DialogTitle>
           <DialogDescription>
-            Registrá una entrada al pozo o un gasto repartido.
+            Registrá el movimiento según cómo se pagó realmente.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
-          <div className="grid grid-cols-2 gap-1 rounded-lg border border-input bg-secondary/60 p-1">
+          <div className="grid grid-cols-3 gap-1 rounded-lg border border-input bg-secondary/60 p-1">
             <SegmentButton
               active={type === "entrada"}
               tone="positive"
@@ -169,9 +189,20 @@ export function MovementDialog({
               tone="negative"
               onClick={() => setType("compra")}
             >
-              Gasto
+              Del pozo
+            </SegmentButton>
+            <SegmentButton
+              active={type === "gasto_pagado"}
+              tone="warning"
+              onClick={() => setType("gasto_pagado")}
+            >
+              Pagó alguien
             </SegmentButton>
           </div>
+
+          <p className="rounded-lg border border-border bg-secondary/35 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+            {typeHelp}
+          </p>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
@@ -207,13 +238,15 @@ export function MovementDialog({
             />
           </div>
 
-          {type === "entrada" ? (
+          {type !== "compra" && (
             <div className="grid gap-1.5">
-              <Label htmlFor="entry-person">Persona que agrega dinero</Label>
+              <Label htmlFor="entry-person">
+                {type === "entrada" ? "Persona que agrega dinero" : "Persona que pagó"}
+              </Label>
               <Select
                 id="entry-person"
-                value={entryPersonId}
-                onChange={(e) => setEntryPersonId(e.target.value)}
+                value={payerId}
+                onChange={(e) => setPayerId(e.target.value)}
               >
                 {people.map((person) => (
                   <option key={person.id} value={person.id}>
@@ -222,7 +255,9 @@ export function MovementDialog({
                 ))}
               </Select>
             </div>
-          ) : (
+          )}
+
+          {type !== "entrada" && (
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label>Participantes</Label>
@@ -274,8 +309,13 @@ export function MovementDialog({
               </div>
               {sharePreview != null && (
                 <p className="text-xs text-muted-foreground">
-                  Se reparte en partes iguales: {formatARS(sharePreview)} por
-                  persona ({participantCount}).
+                  {sharePreview.every((item) => item.amount === sharePreview[0]?.amount)
+                    ? `Se reparte en partes iguales: ${formatARS(sharePreview[0]?.amount ?? 0)} por persona (${participantCount}).`
+                    : `Reparto exacto: entre ${formatARS(
+                        Math.min(...sharePreview.map((item) => item.amount)),
+                      )} y ${formatARS(
+                        Math.max(...sharePreview.map((item) => item.amount)),
+                      )} por persona (${participantCount}).`}
                 </p>
               )}
             </div>
@@ -300,7 +340,7 @@ function SegmentButton({
   children,
 }: {
   active: boolean;
-  tone: "positive" | "negative";
+  tone: "positive" | "negative" | "warning";
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -313,7 +353,9 @@ function SegmentButton({
         active
           ? tone === "positive"
             ? "bg-[hsl(var(--positive))] text-primary-foreground shadow-sm"
-            : "bg-[hsl(var(--negative))] text-destructive-foreground shadow-sm"
+            : tone === "negative"
+              ? "bg-[hsl(var(--negative))] text-destructive-foreground shadow-sm"
+              : "bg-[hsl(var(--warn))] text-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground",
       )}
     >

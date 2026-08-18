@@ -4,6 +4,10 @@ Small web app to track a shared household "pot" (pozo): money people put in
 (_entradas_) and expenses/services split between them (_gastos_), with live balances
 and a shareable report.
 
+Expenses can be paid either from the shared pool or directly by one person. A
+directly paid expense is stored atomically: it credits the payer, charges the
+selected participants, and leaves the physical pool unchanged.
+
 - **Stack:** Vite + React + TypeScript + Tailwind, Firebase (Google auth +
   Firestore), deployed to GitHub Pages via GitHub Actions.
 - **Access:** sign in with Google; only allowlisted emails get in (no
@@ -21,6 +25,7 @@ npm run dev
 
 - `npm run build` — type-check + production build
 - `npm run lint` — ESLint
+- `npm test` — accounting invariant tests
 - `npm run preview` — preview the production build
 
 ## Features
