@@ -1,4 +1,5 @@
 import type { AppData, MovementType, Person, Transaction } from "../types";
+import { isValidAmountCents } from "./appData";
 import { colorForIndex } from "./colors";
 import { createId } from "./ids";
 import { fromCents, toCents } from "./money";
@@ -52,11 +53,10 @@ export function upsertTransaction(data: AppData, input: TransactionInput): AppDa
   const amount = fromCents(toCents(input.amount));
   const participantIds = selectedParticipantIds(data.people, input.participantIds);
   const needsPayer = input.type === "entrada" || input.type === "gasto_pagado";
-  const needsParticipants = input.type !== "entrada";
+  const needsParticipants = input.type === "compra" || input.type === "gasto_pagado";
 
   if (
-    !Number.isSafeInteger(toCents(input.amount)) ||
-    amount <= 0 ||
+    !isValidAmountCents(input.type, toCents(input.amount)) ||
     (needsPayer && !personIds.has(input.personId)) ||
     (needsParticipants && participantIds.length === 0)
   ) {
@@ -96,46 +96,40 @@ export function deleteTransaction(data: AppData, id: string): AppData {
 }
 
 export interface PoolAdjustment {
-  /** Pool balance the app reports right now. */
-  currentPool: number;
+  /** Set when an existing ajuste is being corrected. */
+  id?: string;
+  /**
+   * What the pool adds up to *without* the ajuste being edited — i.e. the
+   * current pool for a new one, and the pool minus its own amount when
+   * editing.
+   */
+  baseline: number;
   /** Balance the shared account really holds. */
   target: number;
   description: string;
   date: string;
-  /** Credited with the surplus when the real balance is higher. */
-  personId: string;
-  /** Split the shortfall when the real balance is lower. */
-  participantIds: string[];
 }
 
 /**
- * Turns "the pool really holds X" into a plain movement, so a correction is
- * auditable and editable like any other:
- * - missing money becomes a pool expense split between the participants;
- * - extra money becomes an entry credited to whoever actually put it in.
+ * Turns "the pool really holds X" into an `ajuste`: a plain movement that
+ * corrects the pool by the difference and deliberately leaves every balance
+ * alone, because nobody knows whose money the difference is.
  *
  * Returns null when the pool already matches and there is nothing to record.
  */
 export function buildPoolAdjustment(
   adjustment: PoolAdjustment,
 ): TransactionInput | null {
-  const deltaCents = toCents(adjustment.target) - toCents(adjustment.currentPool);
-  if (!Number.isSafeInteger(deltaCents) || deltaCents === 0) return null;
+  const deltaCents = toCents(adjustment.target) - toCents(adjustment.baseline);
+  if (!isValidAmountCents("ajuste", deltaCents)) return null;
 
-  const common = { description: adjustment.description, date: adjustment.date };
-  return deltaCents > 0
-    ? {
-        ...common,
-        type: "entrada",
-        amount: fromCents(deltaCents),
-        personId: adjustment.personId,
-        participantIds: [],
-      }
-    : {
-        ...common,
-        type: "compra",
-        amount: fromCents(-deltaCents),
-        personId: "",
-        participantIds: adjustment.participantIds,
-      };
+  return {
+    id: adjustment.id,
+    type: "ajuste",
+    description: adjustment.description,
+    amount: fromCents(deltaCents),
+    date: adjustment.date,
+    personId: "",
+    participantIds: [],
+  };
 }

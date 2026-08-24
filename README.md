@@ -6,7 +6,9 @@ and a shareable report.
 
 Expenses can be paid either from the shared pool or directly by one person. A
 directly paid expense is stored atomically: it credits the payer, charges the
-selected participants, and leaves the physical pool unchanged.
+selected participants, and leaves the physical pool unchanged. When the pool
+drifts from the real account balance, an *ajuste* re-syncs it without altering
+anybody's balance.
 
 - **Stack:** Vite + React + TypeScript + Tailwind, Firebase (Google auth +
   Firestore), deployed to GitHub Pages via GitHub Actions.
@@ -33,10 +35,11 @@ npm run dev
 - **Resumen** — pool total, entradas/gastos totals, per-person balances, and
   who still owes. Click a person to open their detail.
 - **Ajustar** (on the pool card) — when the pool stops matching the real bank
-  balance, set the real balance and the difference is saved as an ordinary
-  movement: a pool expense split between the chosen people when money is
-  missing, or an entrada credited to whoever put it in when there is money
-  left over.
+  balance, set the real balance and the difference is saved as an `ajuste`: a
+  regular movement (listed, editable, deletable) that corrects the pool by a
+  signed amount and touches nobody's balance, because the money cannot be
+  attributed. It is the only movement whose amount may be negative, so
+  `pool` = sum of all balances + the net of the ajustes.
 - **Personas** — manage the household list; click a person to see their
   entradas, the gastos they took part in, and their balance.
 - **Reporte** — a WhatsApp-ready text report, filterable by all time, a single

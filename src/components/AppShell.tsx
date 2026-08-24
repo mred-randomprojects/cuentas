@@ -53,6 +53,7 @@ export function AppShell() {
   const editingTx = editingId
     ? data.transactions.find((tx) => tx.id === editingId) ?? null
     : null;
+  const editingAdjustment = editingTx?.type === "ajuste" ? editingTx : null;
   const selectedRow = personId
     ? ledger.rows.find((row) => row.id === personId) ?? null
     : null;
@@ -64,9 +65,19 @@ export function AppShell() {
   }
 
   function openEditMovement(id: string) {
+    const tx = data.transactions.find((item) => item.id === id);
+    if (!tx) return;
     setPersonOpen(false);
     setEditingId(id);
-    setMovementOpen(true);
+    // An ajuste is answered as "what does the account really hold?", so it is
+    // edited in its own dialog rather than the movement form.
+    if (tx.type === "ajuste") setAdjustOpen(true);
+    else setMovementOpen(true);
+  }
+
+  function openNewAdjustment() {
+    setEditingId(null);
+    setAdjustOpen(true);
   }
 
   function submitMovement(input: TransactionInput) {
@@ -77,7 +88,7 @@ export function AppShell() {
 
   function submitAdjustment(input: TransactionInput) {
     mutate((d) => ops.upsertTransaction(d, input));
-    show("Pozo ajustado.");
+    show(input.id ? "Ajuste actualizado." : "Pozo ajustado.");
   }
 
   function deleteMovement(id: string) {
@@ -87,6 +98,7 @@ export function AppShell() {
     if (editingId === id) {
       setEditingId(null);
       setMovementOpen(false);
+      setAdjustOpen(false);
     }
     mutate((d) => ops.deleteTransaction(d, id));
     show("Movimiento borrado.");
@@ -161,7 +173,7 @@ export function AppShell() {
           <DashboardPage
             data={data}
             onNewMovement={openNewMovement}
-            onAdjustPool={() => setAdjustOpen(true)}
+            onAdjustPool={openNewAdjustment}
             onEditMovement={openEditMovement}
             onDeleteMovement={deleteMovement}
             onOpenPerson={openPerson}
@@ -182,7 +194,7 @@ export function AppShell() {
         open={movementOpen}
         onOpenChange={setMovementOpen}
         people={data.people}
-        editing={editingTx}
+        editing={editingAdjustment ? null : editingTx}
         defaultType={newType}
         onSubmit={submitMovement}
       />
@@ -190,8 +202,8 @@ export function AppShell() {
       <AdjustPoolDialog
         open={adjustOpen}
         onOpenChange={setAdjustOpen}
-        people={data.people}
         pool={ledger.pool}
+        editing={editingAdjustment}
         onSubmit={submitAdjustment}
       />
 

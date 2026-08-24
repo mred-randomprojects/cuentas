@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Plus, SlidersHorizontal, Wallet } from "lucide-react";
 import type { AppData, BalanceTone } from "../types";
 import { getLedger, isDebtor, statusForBalance } from "../lib/ledger";
-import { formatARS } from "../lib/money";
+import { formatARS, formatSignedARS } from "../lib/money";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -61,6 +61,12 @@ export function DashboardPage({
             <strong className="font-serif text-3xl font-bold tracking-tight">
               {formatARS(ledger.pool)}
             </strong>
+            {ledger.adjustments !== 0 && (
+              <span className="text-xs text-muted-foreground">
+                Incluye {formatSignedARS(ledger.adjustments)} en ajustes, sin
+                asignar a nadie.
+              </span>
+            )}
           </CardContent>
         </Card>
         <div className="grid grid-cols-2 gap-4 md:col-span-2">

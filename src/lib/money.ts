@@ -73,6 +73,11 @@ export function formatARS(value: number): string {
   }).format(amount)}`;
 }
 
+/** Same as `formatARS`, but always spelling out the sign (used for ajustes). */
+export function formatSignedARS(value: number): string {
+  return `${value < 0 ? "-" : "+"}${formatARS(Math.abs(value))}`;
+}
+
 /** Plain number formatting used to pre-fill the amount field when editing. */
 export function formatInputAmount(amount: number): string {
   return new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 }).format(amount);

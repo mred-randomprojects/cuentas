@@ -10,7 +10,14 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function defaultDescription(type: MovementType): string {
   if (type === "entrada") return "Entrada de dinero";
   if (type === "gasto_pagado") return "Gasto pagado por una persona";
+  if (type === "ajuste") return "Ajuste de pozo";
   return "Gasto";
+}
+
+/** `ajuste` carries a signed correction; every other movement is positive. */
+export function isValidAmountCents(type: MovementType, cents: number): boolean {
+  if (!Number.isSafeInteger(cents)) return false;
+  return type === "ajuste" ? cents !== 0 : cents > 0;
 }
 
 export function emptyAppData(): AppData {
@@ -52,11 +59,16 @@ export function sanitizeAppData(input: unknown): AppData {
   rawTransactions.forEach((entry) => {
     if (!isObject(entry)) return;
     const type = entry.type;
-    if (type !== "entrada" && type !== "compra" && type !== "gasto_pagado") {
+    if (
+      type !== "entrada" &&
+      type !== "compra" &&
+      type !== "gasto_pagado" &&
+      type !== "ajuste"
+    ) {
       return;
     }
     const amountCents = toCents(Number(entry.amount));
-    if (!Number.isSafeInteger(amountCents) || amountCents <= 0) return;
+    if (!isValidAmountCents(type, amountCents)) return;
     const amount = fromCents(amountCents);
 
     const descriptionRaw =
@@ -64,7 +76,7 @@ export function sanitizeAppData(input: unknown): AppData {
     const date =
       typeof entry.date === "string" && entry.date ? entry.date : todayISO();
     const needsPayer = type === "entrada" || type === "gasto_pagado";
-    const needsParticipants = type !== "entrada";
+    const needsParticipants = type === "compra" || type === "gasto_pagado";
     const personId =
       needsPayer && typeof entry.personId === "string" ? entry.personId : "";
     if (needsPayer && !personIds.has(personId)) return;

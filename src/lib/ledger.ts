@@ -16,6 +16,8 @@ const EPSILON = 0.004;
  * - `compra` removes cash from the pool and assigns the expense.
  * - `gasto_pagado` credits its payer and assigns the expense without changing
  *   the pool. It is one atomic movement rather than a linked entry + purchase.
+ * - `ajuste` moves the pool by a signed amount without touching anybody's
+ *   balance: it is money the household knows about but cannot attribute.
  *
  * All arithmetic is performed in integer cents. Uneven divisions distribute
  * their remainder deterministically, so the individual shares always add up
@@ -51,6 +53,7 @@ export function getLedger(people: Person[], transactions: Transaction[]): Ledger
     ]),
   );
 
+  let adjustmentCents = 0;
   let totalEntryCents = 0;
   let totalPurchaseCents = 0;
   let totalDirectPaymentCents = 0;
@@ -58,6 +61,13 @@ export function getLedger(people: Person[], transactions: Transaction[]): Ledger
 
   for (const tx of transactions) {
     const amountCents = toCents(tx.amount);
+
+    // The only signed movement: it corrects the pool and stops there.
+    if (tx.type === "ajuste") {
+      adjustmentCents += amountCents;
+      continue;
+    }
+
     if (amountCents <= 0) continue;
 
     if (tx.type === "entrada") {
@@ -118,7 +128,8 @@ export function getLedger(people: Person[], transactions: Transaction[]): Ledger
     totalPurchases: fromCents(totalPurchaseCents),
     totalDirectPayments: fromCents(totalDirectPaymentCents),
     totalPoolPurchases: fromCents(totalPoolPurchaseCents),
-    pool: fromCents(totalEntryCents - totalPoolPurchaseCents),
+    adjustments: fromCents(adjustmentCents),
+    pool: fromCents(totalEntryCents - totalPoolPurchaseCents + adjustmentCents),
   };
 }
 

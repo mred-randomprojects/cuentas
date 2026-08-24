@@ -1,5 +1,5 @@
 import type { Person, Transaction } from "../types";
-import { formatARS, formatDate, todayISO } from "./money";
+import { formatARS, formatDate, formatSignedARS, todayISO } from "./money";
 import { getLedger, statusForBalance } from "./ledger";
 import { describeParticipants, personName } from "./people";
 
@@ -23,6 +23,11 @@ export function buildReportText(
   lines.push(`Total de gastos: ${formatARS(ledger.totalPurchases)}`);
   lines.push(`- Pagados del pozo: ${formatARS(ledger.totalPoolPurchases)}`);
   lines.push(`- Pagados por una persona: ${formatARS(ledger.totalDirectPayments)}`);
+  if (ledger.adjustments !== 0) {
+    lines.push(
+      `Ajustes de pozo (sin asignar): ${formatSignedARS(ledger.adjustments)}`,
+    );
+  }
   lines.push("");
   lines.push("SALDOS");
 
@@ -81,7 +86,16 @@ export function buildReportText(
       (a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt),
     );
     for (const tx of movements) {
-      if (tx.type === "entrada") {
+      if (tx.type === "ajuste") {
+        // The default description is the label itself; don't repeat it.
+        const detail =
+          tx.description === "Ajuste de pozo" ? "" : ` · ${tx.description}`;
+        lines.push(
+          `- ${formatDate(tx.date)} · Ajuste de pozo${detail} · ${formatSignedARS(
+            tx.amount,
+          )}`,
+        );
+      } else if (tx.type === "entrada") {
         lines.push(
           `- ${formatDate(tx.date)} · Entrada · ${personName(people, tx.personId)} · ${
             tx.description

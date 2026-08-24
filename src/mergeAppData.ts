@@ -45,6 +45,8 @@ export function mergeAppData(local: AppData, cloud: AppData): AppData {
   const transactions = [...txMap.values()]
     .filter((tx) => !deletedIds.has(tx.id))
     .filter((tx) => {
+      // An ajuste references nobody, so there is nothing to prune.
+      if (tx.type === "ajuste") return true;
       if (tx.type === "entrada") return personIds.has(tx.personId);
 
       const participantsExist =

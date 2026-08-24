@@ -1,4 +1,4 @@
-export type MovementType = "entrada" | "compra" | "gasto_pagado";
+export type MovementType = "entrada" | "compra" | "gasto_pagado" | "ajuste";
 
 export interface Person {
   id: string;
@@ -10,12 +10,16 @@ export interface Transaction {
   id: string;
   type: MovementType;
   description: string;
+  /**
+   * Always positive, except for `ajuste`, where it is the signed correction
+   * applied to the pool (positive adds cash, negative removes it).
+   */
   amount: number;
   /** ISO date (YYYY-MM-DD). */
   date: string;
-  /** Person who contributed the money — for `entrada` and `gasto_pagado`. */
+  /** Person who contributed the money — for `entrada` and `gasto_pagado`. Empty for `ajuste`. */
   personId: string;
-  /** People the cost is split between — for `compra` and `gasto_pagado`. */
+  /** People the cost is split between — for `compra` and `gasto_pagado`. Empty for `ajuste`. */
   participantIds: string[];
   createdAt: string;
   updatedAt: string | null;
@@ -65,6 +69,11 @@ export interface Ledger {
   totalDirectPayments: number;
   /** Shared expenses paid from the pool. */
   totalPoolPurchases: number;
+  /**
+   * Net of the manual pool corrections. This money belongs to nobody in
+   * particular, so `pool` = sum of all balances + `adjustments`.
+   */
+  adjustments: number;
   /** Physical cash currently available in the shared pool. */
   pool: number;
 }

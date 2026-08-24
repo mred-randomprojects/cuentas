@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { Wallet } from "lucide-react";
-import type { Person } from "../types";
+import type { Transaction } from "../types";
 import { buildPoolAdjustment, type TransactionInput } from "../lib/operations";
-import { formatARS, parseMoney, toCents, todayISO } from "../lib/money";
-import { selectedParticipantIds } from "../lib/people";
+import {
+  formatARS,
+  formatInputAmount,
+  parseMoney,
+  toCents,
+  todayISO,
+} from "../lib/money";
 import { useToast } from "./Toast";
-import { ParticipantPicker } from "./ParticipantPicker";
 import {
   Dialog,
   DialogContent,
@@ -17,86 +21,70 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Select } from "./ui/select";
 
 const DEFAULT_DESCRIPTION = "Ajuste de pozo";
 
 interface AdjustPoolDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  people: Person[];
-  /** Pool balance the app currently reports. */
+  /** Pool balance the app currently reports, adjustments included. */
   pool: number;
+  /** The ajuste being corrected, if any. */
+  editing: Transaction | null;
   onSubmit: (input: TransactionInput) => void;
 }
 
 export function AdjustPoolDialog({
   open,
   onOpenChange,
-  people,
   pool,
+  editing,
   onSubmit,
 }: AdjustPoolDialogProps) {
   const { show } = useToast();
   const [target, setTarget] = useState("");
   const [date, setDate] = useState(todayISO());
   const [description, setDescription] = useState("");
-  const [payerId, setPayerId] = useState("");
-  const [participants, setParticipants] = useState<Set<string>>(new Set());
+
+  // What the movements add up to without this ajuste. Editing one means
+  // re-answering the same question, so its own amount is taken back out first.
+  const baseline = pool - (editing?.amount ?? 0);
 
   useEffect(() => {
     if (!open) return;
-    setTarget("");
-    setDate(todayISO());
-    setDescription("");
-    setPayerId(people[0]?.id ?? "");
-    setParticipants(new Set(people.map((person) => person.id)));
-    // Re-initialised on every open; people is intentionally read as a snapshot.
+    setTarget(editing ? formatInputAmount(pool) : "");
+    setDate(editing?.date ?? todayISO());
+    setDescription(
+      editing && editing.description !== DEFAULT_DESCRIPTION
+        ? editing.description
+        : "",
+    );
+    // Re-initialised when the dialog opens or the edited ajuste changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, editing?.id]);
 
   const parsedTarget = parseMoney(target);
   const hasTarget =
     Number.isFinite(parsedTarget) && Number.isSafeInteger(toCents(parsedTarget));
-  const deltaCents = hasTarget ? toCents(parsedTarget) - toCents(pool) : null;
+  const deltaCents = hasTarget ? toCents(parsedTarget) - toCents(baseline) : null;
   const difference = deltaCents == null ? null : Math.abs(deltaCents) / 100;
-  const isSurplus = deltaCents != null && deltaCents > 0;
   const isShortfall = deltaCents != null && deltaCents < 0;
-  const canSubmit = people.length > 0 && deltaCents != null && deltaCents !== 0;
+  const canSubmit = deltaCents != null && deltaCents !== 0;
 
   function handleSubmit() {
-    if (!people.length) {
-      show("Agregá al menos una persona.");
-      return;
-    }
     if (!hasTarget) {
       show("Ingresá el saldo real del pozo.");
       return;
     }
-    if (deltaCents === 0) {
-      show("El pozo ya coincide con ese saldo.");
-      return;
-    }
-    const participantIds = selectedParticipantIds(people, participants);
-    if (isSurplus && !people.some((person) => person.id === payerId)) {
-      show("Elegí a quién se le acredita el dinero de más.");
-      return;
-    }
-    if (isShortfall && !participantIds.length) {
-      show("Elegí al menos una persona para repartir la diferencia.");
-      return;
-    }
-
     const input = buildPoolAdjustment({
-      currentPool: pool,
+      id: editing?.id,
+      baseline,
       target: parsedTarget,
       description: description.trim() || DEFAULT_DESCRIPTION,
       date: date || todayISO(),
-      personId: payerId,
-      participantIds,
     });
     if (!input) {
-      show("No hay diferencia para ajustar.");
+      show("El pozo ya coincide con ese saldo.");
       return;
     }
 
@@ -108,10 +96,13 @@ export function AdjustPoolDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Ajustar el pozo</DialogTitle>
+          <DialogTitle>
+            {editing ? "Editar ajuste del pozo" : "Ajustar el pozo"}
+          </DialogTitle>
           <DialogDescription>
-            Poné el saldo real de la cuenta y se registra el movimiento que falta
-            para que la app vuelva a coincidir.
+            Poné el saldo real de la cuenta. La diferencia queda anotada como un
+            ajuste que no le suma ni le resta a nadie: los saldos de cada persona
+            no cambian.
           </DialogDescription>
         </DialogHeader>
 
@@ -148,12 +139,6 @@ export function AdjustPoolDialog({
             </div>
           </div>
 
-          {people.length === 0 && (
-            <p className="rounded-lg border border-border bg-secondary/35 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-              Agregá al menos una persona para poder ajustar el pozo.
-            </p>
-          )}
-
           {target.trim() !== "" && !hasTarget && (
             <p className="rounded-lg border border-border bg-[hsl(var(--negative-soft))] px-3 py-2 text-xs font-semibold text-[hsl(var(--negative))]">
               Ingresá un monto válido.
@@ -171,13 +156,12 @@ export function AdjustPoolDialog({
               {isShortfall ? (
                 <>
                   Faltan <strong>{formatARS(difference)}</strong> en el pozo. Se
-                  registra un gasto del pozo por ese monto, repartido entre los
-                  participantes.
+                  descuentan del pozo sin tocar los saldos.
                 </>
               ) : (
                 <>
                   Sobran <strong>{formatARS(difference)}</strong> en el pozo. Se
-                  registra una entrada por ese monto a nombre de quien lo puso.
+                  suman al pozo sin tocar los saldos.
                 </>
               )}
             </p>
@@ -193,32 +177,6 @@ export function AdjustPoolDialog({
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-
-          {isSurplus && (
-            <div className="grid gap-1.5">
-              <Label htmlFor="adjust-person">Persona que puso ese dinero</Label>
-              <Select
-                id="adjust-person"
-                value={payerId}
-                onChange={(e) => setPayerId(e.target.value)}
-              >
-                {people.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          )}
-
-          {isShortfall && (
-            <ParticipantPicker
-              people={people}
-              value={participants}
-              onChange={setParticipants}
-              amount={difference}
-            />
-          )}
         </div>
 
         <DialogFooter>
@@ -226,7 +184,7 @@ export function AdjustPoolDialog({
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
-            Ajustar pozo
+            {editing ? "Guardar ajuste" : "Ajustar pozo"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { Person, Transaction } from "../types";
-import { formatARS, formatDate, splitMoney } from "../lib/money";
+import { formatARS, formatDate, formatSignedARS, splitMoney } from "../lib/money";
 import { describeParticipants, personName } from "../lib/people";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,8 @@ export function TransactionCard({
   onEdit,
   onDelete,
 }: TransactionCardProps) {
-  const isPurchase = tx.type !== "entrada";
+  const isAdjustment = tx.type === "ajuste";
+  const isPurchase = !isAdjustment && tx.type !== "entrada";
   const isDirectPayment = tx.type === "gasto_pagado";
   const participantCount = tx.participantIds.length;
   const shares = isPurchase ? splitMoney(tx.amount, tx.participantIds) : [];
@@ -31,35 +32,44 @@ export function TransactionCard({
         : `${formatARS(Math.min(...shareAmounts))}–${formatARS(
             Math.max(...shareAmounts),
           )} por persona`;
-  const meta = !isPurchase
-    ? `${personName(people, tx.personId)} agregó dinero al pozo`
-    : isDirectPayment
-      ? `${personName(people, tx.personId)} pagó · ${describeParticipants(
-          people,
-          tx.participantIds,
-        )} · ${shareLabel}`
-      : `${describeParticipants(people, tx.participantIds)} · ${shareLabel}`;
+  const meta = isAdjustment
+    ? `${tx.amount < 0 ? "Descuenta del" : "Suma al"} pozo · No cambia el saldo de nadie`
+    : !isPurchase
+      ? `${personName(people, tx.personId)} agregó dinero al pozo`
+      : isDirectPayment
+        ? `${personName(people, tx.personId)} pagó · ${describeParticipants(
+            people,
+            tx.participantIds,
+          )} · ${shareLabel}`
+        : `${describeParticipants(people, tx.participantIds)} · ${shareLabel}`;
 
-  const badgeVariant = !isPurchase
-    ? "positive"
-    : isDirectPayment
-      ? "warning"
-      : "negative";
-  const badgeLabel = !isPurchase
-    ? "Entrada"
-    : isDirectPayment
-      ? "Pagó alguien"
-      : "Gasto del pozo";
+  const badgeVariant = isAdjustment
+    ? "neutral"
+    : !isPurchase
+      ? "positive"
+      : isDirectPayment
+        ? "warning"
+        : "negative";
+  const badgeLabel = isAdjustment
+    ? "Ajuste"
+    : !isPurchase
+      ? "Entrada"
+      : isDirectPayment
+        ? "Pagó alguien"
+        : "Gasto del pozo";
+  const accentClass = isAdjustment
+    ? "border-l-4 border-l-muted-foreground/50"
+    : !isPurchase
+      ? "border-l-4 border-l-[hsl(var(--positive))]"
+      : isDirectPayment
+        ? "border-l-4 border-l-[hsl(var(--warn))]"
+        : "border-l-4 border-l-[hsl(var(--negative))]";
 
   return (
     <article
       className={cn(
         "flex items-start justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm",
-        !isPurchase
-          ? "border-l-4 border-l-[hsl(var(--positive))]"
-          : isDirectPayment
-            ? "border-l-4 border-l-[hsl(var(--warn))]"
-            : "border-l-4 border-l-[hsl(var(--negative))]",
+        accentClass,
       )}
     >
       <div className="min-w-0 space-y-1">
@@ -70,7 +80,8 @@ export function TransactionCard({
           </strong>
         </div>
         <p className="text-sm text-muted-foreground">
-          {formatDate(tx.date)} · {formatARS(tx.amount)}
+          {formatDate(tx.date)} ·{" "}
+          {isAdjustment ? formatSignedARS(tx.amount) : formatARS(tx.amount)}
         </p>
         <p className="text-sm text-muted-foreground">{meta}</p>
       </div>

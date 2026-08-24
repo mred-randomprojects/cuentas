@@ -14,6 +14,7 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: "entrada", label: "Entradas" },
   { value: "compra", label: "Del pozo" },
   { value: "gasto_pagado", label: "Pagados" },
+  { value: "ajuste", label: "Ajustes" },
 ];
 
 interface TransactionListProps {
