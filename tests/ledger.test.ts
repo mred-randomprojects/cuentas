@@ -4,6 +4,7 @@ import { sanitizeAppData } from "../src/lib/appData";
 import { getLedger } from "../src/lib/ledger";
 import { splitMoney, toCents } from "../src/lib/money";
 import {
+  buildPoolAdjustment,
   deletePerson,
   deleteTransaction,
   upsertTransaction,
@@ -191,4 +192,111 @@ test("sanitization accepts valid direct payments and rejects broken references",
   assert.equal(sanitized.transactions.length, 1);
   assert.equal(sanitized.transactions[0]?.id, valid.id);
   assert.equal(sanitized.transactions[0]?.amount, 12.35);
+});
+
+test("setting the pool higher records an entry for whoever put the money in", () => {
+  const transactions = [tx("entrada", 100, "ana", []), tx("compra", 30, "", ["ana", "beto"])];
+  const before = getLedger(people, transactions);
+  assert.equal(before.pool, 70);
+
+  const input = buildPoolAdjustment({
+    currentPool: before.pool,
+    target: 100,
+    description: "Ajuste de pozo",
+    date: "2026-08-20",
+    personId: "beto",
+    participantIds: ["ana", "beto", "carla"],
+  });
+  assert.ok(input);
+  assert.equal(input.type, "entrada");
+  assert.equal(input.amount, 30);
+  assert.equal(input.personId, "beto");
+  assert.deepEqual(input.participantIds, []);
+
+  const data = upsertTransaction(
+    { people, transactions, deletedIds: [], updatedAt: null },
+    input,
+  );
+  const after = getLedger(people, data.transactions);
+  assert.equal(after.pool, 100);
+  assert.equal(rowById(after, "beto").entries, 30);
+  assert.equal(
+    toCents(after.rows.reduce((sum, row) => sum + row.balance, 0)),
+    toCents(after.pool),
+  );
+});
+
+test("setting the pool lower records a pool expense split between the participants", () => {
+  const transactions = [tx("entrada", 100, "ana", [])];
+  const before = getLedger(people, transactions);
+
+  const input = buildPoolAdjustment({
+    currentPool: before.pool,
+    target: 40,
+    description: "Ajuste de pozo",
+    date: "2026-08-20",
+    personId: "ana",
+    participantIds: ["ana", "beto"],
+  });
+  assert.ok(input);
+  assert.equal(input.type, "compra");
+  assert.equal(input.amount, 60);
+  assert.equal(input.personId, "");
+  assert.deepEqual(input.participantIds, ["ana", "beto"]);
+
+  const data = upsertTransaction(
+    { people, transactions, deletedIds: [], updatedAt: null },
+    input,
+  );
+  const after = getLedger(people, data.transactions);
+  assert.equal(after.pool, 40);
+  assert.equal(rowById(after, "ana").balance, 70);
+  assert.equal(rowById(after, "beto").balance, -30);
+  assert.equal(rowById(after, "carla").balance, 0);
+  assert.equal(
+    toCents(after.rows.reduce((sum, row) => sum + row.balance, 0)),
+    toCents(after.pool),
+  );
+});
+
+test("a pool adjustment works on cents and does nothing when it already matches", () => {
+  assert.equal(
+    buildPoolAdjustment({
+      currentPool: 70,
+      target: 70,
+      description: "Ajuste de pozo",
+      date: "2026-08-20",
+      personId: "ana",
+      participantIds: ["ana"],
+    }),
+    null,
+  );
+
+  const cents = buildPoolAdjustment({
+    currentPool: 0.1,
+    target: 0.35,
+    description: "Ajuste de pozo",
+    date: "2026-08-20",
+    personId: "ana",
+    participantIds: ["ana"],
+  });
+  assert.ok(cents);
+  assert.equal(cents.type, "entrada");
+  assert.equal(toCents(cents.amount), 25);
+});
+
+test("participants are stored in people order, whatever order they were picked in", () => {
+  const data = upsertTransaction(
+    { people, transactions: [], deletedIds: [], updatedAt: null },
+    {
+      type: "compra",
+      description: "Verduras",
+      amount: 30,
+      date: "2026-08-20",
+      personId: "",
+      participantIds: ["carla", "ana", "carla", "fantasma"],
+    },
+  );
+
+  assert.deepEqual(data.transactions[0]?.participantIds, ["ana", "carla"]);
 });

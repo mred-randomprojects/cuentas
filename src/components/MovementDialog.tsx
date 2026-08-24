@@ -1,15 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { MovementType, Person, Transaction } from "../types";
 import type { TransactionInput } from "../lib/operations";
-import {
-  formatARS,
-  formatInputAmount,
-  parseMoney,
-  splitMoney,
-  toCents,
-  todayISO,
-} from "../lib/money";
+import { formatInputAmount, parseMoney, toCents, todayISO } from "../lib/money";
+import { selectedParticipantIds } from "../lib/people";
 import { useToast } from "./Toast";
+import { ParticipantPicker } from "./ParticipantPicker";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -81,25 +76,6 @@ export function MovementDialog({
   }, [open, editing?.id, defaultType]);
 
   const parsedAmount = parseMoney(amount);
-  const participantCount = [...participants].filter((id) =>
-    people.some((person) => person.id === id),
-  ).length;
-  const sharePreview =
-    type !== "entrada" && Number.isFinite(parsedAmount) && participantCount > 0
-      ? splitMoney(
-          parsedAmount,
-          [...participants].filter((id) => people.some((person) => person.id === id)),
-        )
-      : null;
-
-  function toggleParticipant(id: string) {
-    setParticipants((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   function handleSubmit() {
     if (!people.length) {
@@ -121,9 +97,7 @@ export function MovementDialog({
       show(type === "entrada" ? "Elegí quién agrega dinero." : "Elegí quién pagó.");
       return;
     }
-    const participantIds = [...participants].filter((id) =>
-      people.some((person) => person.id === id),
-    );
+    const participantIds = selectedParticipantIds(people, participants);
     if (needsParticipants && !participantIds.length) {
       show("Elegí al menos una persona para repartir el gasto.");
       return;
@@ -258,67 +232,12 @@ export function MovementDialog({
           )}
 
           {type !== "entrada" && (
-            <div className="grid gap-2">
-              <div className="flex items-center justify-between">
-                <Label>Participantes</Label>
-                <div className="flex gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setParticipants(new Set(people.map((p) => p.id)))
-                    }
-                  >
-                    Todos
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setParticipants(new Set())}
-                  >
-                    Nadie
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {people.map((person) => {
-                  const selected = participants.has(person.id);
-                  return (
-                    <button
-                      key={person.id}
-                      type="button"
-                      aria-pressed={selected}
-                      onClick={() => toggleParticipant(person.id)}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
-                        selected
-                          ? "border-primary/40 bg-[hsl(var(--positive-soft))] font-semibold text-[hsl(var(--positive))]"
-                          : "border-input bg-card hover:bg-accent",
-                      )}
-                    >
-                      <span
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ background: person.color }}
-                      />
-                      <span className="truncate">{person.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {sharePreview != null && (
-                <p className="text-xs text-muted-foreground">
-                  {sharePreview.every((item) => item.amount === sharePreview[0]?.amount)
-                    ? `Se reparte en partes iguales: ${formatARS(sharePreview[0]?.amount ?? 0)} por persona (${participantCount}).`
-                    : `Reparto exacto: entre ${formatARS(
-                        Math.min(...sharePreview.map((item) => item.amount)),
-                      )} y ${formatARS(
-                        Math.max(...sharePreview.map((item) => item.amount)),
-                      )} por persona (${participantCount}).`}
-                </p>
-              )}
-            </div>
+            <ParticipantPicker
+              people={people}
+              value={participants}
+              onChange={setParticipants}
+              amount={Number.isFinite(parsedAmount) ? parsedAmount : null}
+            />
           )}
         </div>
 

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Plus, Wallet } from "lucide-react";
+import { Plus, SlidersHorizontal, Wallet } from "lucide-react";
 import type { AppData, BalanceTone } from "../types";
 import { getLedger, isDebtor, statusForBalance } from "../lib/ledger";
 import { formatARS } from "../lib/money";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 interface DashboardPageProps {
   data: AppData;
   onNewMovement: () => void;
+  onAdjustPool: () => void;
   onEditMovement: (id: string) => void;
   onDeleteMovement: (id: string) => void;
   onOpenPerson: (id: string) => void;
@@ -27,6 +28,7 @@ function toneClass(tone: BalanceTone): string {
 export function DashboardPage({
   data,
   onNewMovement,
+  onAdjustPool,
   onEditMovement,
   onDeleteMovement,
   onOpenPerson,
@@ -43,8 +45,18 @@ export function DashboardPage({
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-gradient-to-br from-primary/10 to-card md:col-span-1">
           <CardContent className="flex flex-col gap-1 p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Wallet className="size-4" /> Pozo disponible
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Wallet className="size-4" /> Pozo disponible
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAdjustPool}
+                title="Ajustar el pozo al saldo real de la cuenta"
+              >
+                <SlidersHorizontal /> Ajustar
+              </Button>
             </div>
             <strong className="font-serif text-3xl font-bold tracking-tight">
               {formatARS(ledger.pool)}

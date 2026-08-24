@@ -32,6 +32,11 @@ npm run dev
 
 - **Resumen** — pool total, entradas/gastos totals, per-person balances, and
   who still owes. Click a person to open their detail.
+- **Ajustar** (on the pool card) — when the pool stops matching the real bank
+  balance, set the real balance and the difference is saved as an ordinary
+  movement: a pool expense split between the chosen people when money is
+  missing, or an entrada credited to whoever put it in when there is money
+  left over.
 - **Personas** — manage the household list; click a person to see their
   entradas, the gastos they took part in, and their balance.
 - **Reporte** — a WhatsApp-ready text report, filterable by all time, a single

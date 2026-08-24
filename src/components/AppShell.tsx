@@ -20,6 +20,7 @@ import { DashboardPage } from "./DashboardPage";
 import { PeoplePage } from "./PeoplePage";
 import { ReportPage } from "./ReportPage";
 import { MovementDialog } from "./MovementDialog";
+import { AdjustPoolDialog } from "./AdjustPoolDialog";
 import { PersonDetailDialog } from "./PersonDetailDialog";
 import { SettingsDialog } from "./SettingsDialog";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ export function AppShell() {
 
   const [tab, setTab] = useState<Tab>("resumen");
   const [movementOpen, setMovementOpen] = useState(false);
+  const [adjustOpen, setAdjustOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newType, setNewType] = useState<MovementType>("entrada");
   const [personId, setPersonId] = useState<string | null>(null);
@@ -71,6 +73,11 @@ export function AppShell() {
     const isEdit = Boolean(input.id);
     mutate((d) => ops.upsertTransaction(d, input));
     show(isEdit ? "Movimiento actualizado." : "Movimiento registrado.");
+  }
+
+  function submitAdjustment(input: TransactionInput) {
+    mutate((d) => ops.upsertTransaction(d, input));
+    show("Pozo ajustado.");
   }
 
   function deleteMovement(id: string) {
@@ -154,6 +161,7 @@ export function AppShell() {
           <DashboardPage
             data={data}
             onNewMovement={openNewMovement}
+            onAdjustPool={() => setAdjustOpen(true)}
             onEditMovement={openEditMovement}
             onDeleteMovement={deleteMovement}
             onOpenPerson={openPerson}
@@ -177,6 +185,14 @@ export function AppShell() {
         editing={editingTx}
         defaultType={newType}
         onSubmit={submitMovement}
+      />
+
+      <AdjustPoolDialog
+        open={adjustOpen}
+        onOpenChange={setAdjustOpen}
+        people={data.people}
+        pool={ledger.pool}
+        onSubmit={submitAdjustment}
       />
 
       <PersonDetailDialog

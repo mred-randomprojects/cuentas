@@ -2,6 +2,7 @@ import type { AppData, MovementType, Person, Transaction } from "../types";
 import { colorForIndex } from "./colors";
 import { createId } from "./ids";
 import { fromCents, toCents } from "./money";
+import { selectedParticipantIds } from "./people";
 
 export function addPerson(data: AppData, name: string): AppData {
   const person: Person = {
@@ -49,9 +50,7 @@ export interface TransactionInput {
 export function upsertTransaction(data: AppData, input: TransactionInput): AppData {
   const personIds = new Set(data.people.map((person) => person.id));
   const amount = fromCents(toCents(input.amount));
-  const participantIds = [...new Set(input.participantIds)].filter((id) =>
-    personIds.has(id),
-  );
+  const participantIds = selectedParticipantIds(data.people, input.participantIds);
   const needsPayer = input.type === "entrada" || input.type === "gasto_pagado";
   const needsParticipants = input.type !== "entrada";
 
@@ -94,4 +93,49 @@ export function deleteTransaction(data: AppData, id: string): AppData {
     transactions: data.transactions.filter((tx) => tx.id !== id),
     deletedIds: [...data.deletedIds, id],
   };
+}
+
+export interface PoolAdjustment {
+  /** Pool balance the app reports right now. */
+  currentPool: number;
+  /** Balance the shared account really holds. */
+  target: number;
+  description: string;
+  date: string;
+  /** Credited with the surplus when the real balance is higher. */
+  personId: string;
+  /** Split the shortfall when the real balance is lower. */
+  participantIds: string[];
+}
+
+/**
+ * Turns "the pool really holds X" into a plain movement, so a correction is
+ * auditable and editable like any other:
+ * - missing money becomes a pool expense split between the participants;
+ * - extra money becomes an entry credited to whoever actually put it in.
+ *
+ * Returns null when the pool already matches and there is nothing to record.
+ */
+export function buildPoolAdjustment(
+  adjustment: PoolAdjustment,
+): TransactionInput | null {
+  const deltaCents = toCents(adjustment.target) - toCents(adjustment.currentPool);
+  if (!Number.isSafeInteger(deltaCents) || deltaCents === 0) return null;
+
+  const common = { description: adjustment.description, date: adjustment.date };
+  return deltaCents > 0
+    ? {
+        ...common,
+        type: "entrada",
+        amount: fromCents(deltaCents),
+        personId: adjustment.personId,
+        participantIds: [],
+      }
+    : {
+        ...common,
+        type: "compra",
+        amount: fromCents(-deltaCents),
+        personId: "",
+        participantIds: adjustment.participantIds,
+      };
 }
